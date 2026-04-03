@@ -1,0 +1,15 @@
+# Allow all search engines to crawl specific pages
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login/
+Disallow: /dashboard/
+Disallow: /supabase-client.js
+Disallow: /admin.sales-upgrades.js
+
+# Explicitly allow these pages
+Allow: /index.html
+Allow: /product.html
+
+# Sitemap location
+Sitemap: https://rugero-agro-daily-ltd.vercel.app/sitemap.xml
