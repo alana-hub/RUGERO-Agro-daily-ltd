@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View product details and contact RUGERO Agro-Daily Ltd directly to order.">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#25d366">
+  <title>Product Details | RUGERO Agro-Daily Ltd</title>
+  <link id="canonicalLink" rel="canonical" href="">
+  <meta property="og:site_name" content="RUGERO Agro-Daily Ltd">
+  <meta property="og:type" content="product">
+  <meta property="og:title" content="Product Details | RUGERO Agro-Daily Ltd">
+  <meta property="og:description" content="View product details and contact RUGERO Agro-Daily Ltd directly to order.">
+  <meta id="ogUrl" property="og:url" content="">
+  <meta id="ogImage" property="og:image" content="">
+  <meta property="twitter:card" content="summary">
+  <meta property="twitter:title" content="Product Details | RUGERO Agro-Daily Ltd">
+  <meta property="twitter:description" content="View product details and contact RUGERO Agro-Daily Ltd directly to order.">
+  <meta id="twitterImage" property="twitter:image" content="">
+  <style>
+    :root {
+      --call: #1f8ef1;
+      --call-deep: #0f5ec7;
+    }
+    body { margin: 0; padding: 20px 20px 32px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: #243746; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    img { width: 100%; max-height: 420px; object-fit: cover; border-radius: 10px; background: #eef2f5; }
+    h1 { margin: 0 0 10px; line-height: 1.14; overflow-wrap: anywhere; }
+    p { overflow-wrap: anywhere; }
+    .actions { display: grid; gap: 8px; margin-top: 12px; }
+    .btn { border: none; border-radius: 12px; padding: 11px 14px; font-weight: 700; color: #fff; text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0,0,0,0.12); }
+    .wa { background: #25d366; }
+    .call {
+      background: linear-gradient(135deg, var(--call) 0%, var(--call-deep) 100%);
+      justify-content: flex-start;
+      padding: 12px 14px;
+      box-shadow: 0 14px 24px rgba(31, 142, 241, 0.26);
+      position: relative;
+      overflow: hidden;
+    }
+    .call::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,0.18), transparent 44%, transparent 56%, rgba(255,255,255,0.1));
+      pointer-events: none;
+    }
+    .call .call-icon {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.2);
+      position: relative;
+      z-index: 1;
+    }
+    .call .call-copy {
+      display: grid;
+      gap: 2px;
+      text-align: left;
+      line-height: 1.1;
+      position: relative;
+      z-index: 1;
+      min-width: 0;
+    }
+    .call .call-copy strong { font-size: 1rem; }
+    .call .call-copy small { font-size: 0.74rem; color: rgba(255,255,255,0.82); }
+    .call.is-disabled {
+      background: linear-gradient(135deg, #9cb8d6 0%, #86a8cd 100%);
+      box-shadow: none;
+      pointer-events: none;
+    }
+    .back { background: #2f4251; }
+    @media (max-width: 780px) {
+      body { padding: 14px 14px 24px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { padding: 14px; }
+      img { max-height: 340px; }
+      .back { width: 100%; margin-bottom: 12px; }
+    }
+    @media (max-width: 420px) {
+      body { padding: 12px 12px 20px; }
+      .card { padding: 12px; }
+      img { max-height: 280px; }
+      .call .call-icon { width: 40px; height: 40px; min-width: 40px; }
+      .call .call-copy strong { font-size: 0.96rem; }
+      .call .call-copy small { font-size: 0.7rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="index.html" class="btn back">Back to Shop</a>
+    <div class="card" style="margin-top:12px;">
+        <div class="grid">
+        <div><img id="productImage" alt="Product image"></div>
+        <div>
+          <h1 id="productName">Loading...</h1>
+          <p id="productPrice"></p>
+          <p id="productBox"></p>
+          <div class="actions">
+            <a id="waBtn" class="btn wa" href="#" target="_blank">WhatsApp</a>
+            <a id="callBtn" class="btn call" href="#">
+              <span class="call-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.91.35 1.8.68 2.66a2 2 0 0 1-.45 2.11L8.07 9.93a16 16 0 0 0 6 6l1.44-1.27a2 2 0 0 1 2.11-.45c.86.33 1.75.56 2.66.68A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </span>
+              <span class="call-copy">
+                <strong>Call the Shop</strong>
+                <small>Speak to us directly</small>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./env.js"></script>
+  <script src="./supabase-client.js"></script>
+  <script>
+    const productImage = document.getElementById("productImage");
+
+    function formatRwf(value) {
+      return new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(Number(value) || 0);
+    }
+
+    function fallbackImageSrc(label) {
+      const safeLabel = String(label || "Image")
+        .slice(0, 40)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+          <rect width="640" height="640" fill="#e7edf2"/>
+          <rect x="96" y="96" width="448" height="448" rx="42" fill="#ffffff" stroke="#c9d6e2" stroke-width="10"/>
+          <text x="320" y="332" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" fill="#5d6d7e">${safeLabel}</text>
+        </svg>
+      `;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    function attachImageFallback(imgEl, label) {
+      if (!imgEl || imgEl.dataset.fallbackBound === "true") return;
+      const fallbackSrc = fallbackImageSrc(label);
+      imgEl.dataset.fallbackBound = "true";
+      imgEl.addEventListener("error", () => {
+        if (imgEl.dataset.fallbackApplied === "true") return;
+        imgEl.dataset.fallbackApplied = "true";
+        imgEl.src = fallbackSrc;
+      });
+      if (!imgEl.getAttribute("src")) {
+        imgEl.dataset.fallbackApplied = "true";
+        imgEl.src = fallbackSrc;
+      }
+    }
+
+    function getParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name) || "";
+    }
+
+    function callLink() {
+      const phone = (window.appConfig?.adminPhone || "").replace(/\s+/g, "");
+      return phone ? `tel:${phone}` : "#";
+    }
+
+    function applyCallButtonState(link) {
+      const callBtn = document.getElementById("callBtn");
+      if (!callBtn) return;
+      const meta = callBtn.querySelector(".call-copy small");
+      callBtn.href = link;
+      const disabled = link === "#";
+      callBtn.classList.toggle("is-disabled", disabled);
+      callBtn.setAttribute("aria-disabled", disabled ? "true" : "false");
+      if (disabled) {
+        callBtn.setAttribute("tabindex", "-1");
+        if (meta) meta.textContent = "Number unavailable";
+        return;
+      }
+
+      callBtn.removeAttribute("tabindex");
+      if (meta) meta.textContent = "Speak to us directly";
+    }
+
+    function waLink(message) {
+      const phone = (window.appConfig?.whatsappPhone || "").replace(/\D/g, "");
+      return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "#";
+    }
+
+    function updateSeoMetadata(product) {
+      const businessNameText = window.appConfig?.businessName || "RUGERO Agro-Daily Ltd";
+      const productName = product?.name || "Product Details";
+      const title = `${productName} | ${businessNameText}`;
+      const hasBox = Number(product?.units_per_box) > 0;
+      const boxPrice = hasBox
+        ? (Number.isFinite(Number(product?.price_per_box)) && Number(product.price_per_box) > 0
+          ? Number(product.price_per_box)
+          : Number(product?.price_per_unit || 0) * Number(product?.units_per_box || 0))
+        : null;
+      const description = hasBox
+        ? `${productName} at ${formatRwf(product?.price_per_unit)} per unit or ${formatRwf(boxPrice)} per box from ${businessNameText}.`
+        : `${productName} at ${formatRwf(product?.price_per_unit)} from ${businessNameText}.`;
+      const canonicalUrl = window.location.href;
+
+      document.title = title;
+      const descriptionMeta = document.querySelector('meta[name="description"]');
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      const ogDescription = document.querySelector('meta[property="og:description"]');
+      const twitterTitle = document.querySelector('meta[property="twitter:title"]');
+      const twitterDescription = document.querySelector('meta[property="twitter:description"]');
+      const canonicalLink = document.getElementById("canonicalLink");
+      const ogUrl = document.getElementById("ogUrl");
+      const ogImage = document.getElementById("ogImage");
+      const twitterImage = document.getElementById("twitterImage");
+
+      if (descriptionMeta) descriptionMeta.setAttribute("content", description);
+      if (ogTitle) ogTitle.setAttribute("content", title);
+      if (ogDescription) ogDescription.setAttribute("content", description);
+      if (twitterTitle) twitterTitle.setAttribute("content", title);
+      if (twitterDescription) twitterDescription.setAttribute("content", description);
+      if (canonicalLink) canonicalLink.setAttribute("href", canonicalUrl);
+      if (ogUrl) ogUrl.setAttribute("content", canonicalUrl);
+
+      if (product?.image) {
+        if (ogImage) ogImage.setAttribute("content", product.image);
+        if (twitterImage) twitterImage.setAttribute("content", product.image);
+      }
+    }
+
+    async function init() {
+      attachImageFallback(productImage, "Product image");
+
+      const id = getParam("id");
+      if (!id) {
+        document.getElementById("productName").textContent = "Product not found";
+        return;
+      }
+
+      let client;
+      try {
+        client = createSupabaseClientOrFail();
+      } catch (error) {
+        document.getElementById("productName").textContent = error.message || "Missing configuration";
+        return;
+      }
+
+      try {
+        const data = await getStorefrontProduct(client, id);
+
+        if (!data) {
+          document.getElementById("productName").textContent = "Product not found";
+          return;
+        }
+
+        document.getElementById("productName").textContent = data.name || "Unnamed";
+        productImage.src = data.image || fallbackImageSrc("Product image");
+        document.getElementById("productPrice").textContent = `Price per unit: ${formatRwf(data.price_per_unit)}`;
+        const canBox = Number(data.units_per_box) > 0;
+        const manualBox = Number(data.price_per_box);
+        const boxPrice = canBox
+          ? (Number.isFinite(manualBox) && manualBox > 0
+            ? manualBox
+            : Number(data.price_per_unit || 0) * Number(data.units_per_box || 0))
+          : null;
+        document.getElementById("productBox").textContent = canBox
+          ? `Price per box (${data.units_per_box} units): ${formatRwf(boxPrice)}`
+          : "This product is sold by unit only.";
+
+        updateSeoMetadata(data);
+        document.getElementById("waBtn").href = waLink(`Hello! I am interested in ${data.name} from ${window.appConfig.businessName}.`);
+        applyCallButtonState(callLink());
+      } catch (fetchError) {
+        console.error(fetchError);
+        document.getElementById("productName").textContent = "Unable to load product details right now";
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

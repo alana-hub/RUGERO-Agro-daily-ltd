@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rugero Agro-vet Daily Ltd online with direct WhatsApp ordering, product browsing, and quick contact options.">
+    <meta name="theme-color" content="#25d366">
+    <meta name="robots" content="index,follow">
+    <title>RUGERO Agro-Daily Ltd</title>
+    <link id="canonicalLink" rel="canonical" href="">
+    <meta property="og:site_name" content="RUGERO Agro-Daily Ltd">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="RUGERO Agro-Daily Ltd | Online Shop">
+    <meta property="og:description" content="RUGERO Agro-Daily Ltd online with direct WhatsApp ordering, product browsing, and quick contact options.">
+    <meta id="ogUrl" property="og:url" content="">
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="RUGERO Agro-Daily Ltd| Online Shop">
+    <meta property="twitter:description" content="RUGERO Agro-Daily Ltd online with direct WhatsApp ordering, product browsing, and quick contact options.">
+    <link rel="icon" href="alogo.jpg" type="image/jpeg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --accent: #25d366;
+            --accent-dark: #128c7e;
+            --call: #1f8ef1;
+            --call-deep: #0f5ec7;
+            --call-soft: #d9ebff;
+            --muted: #95a5a6;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px 20px 96px; color: var(--text); }
+        .wrap { max-width: 1200px; margin: 0 auto; }
+        .brand-header { text-align: center; margin-bottom: 24px; }
+        .brand-header h1 { margin: 10px 0 6px; line-height: 1.12; overflow-wrap: anywhere; }
+        .logo-img { width: 120px; height: 120px; object-fit: contain; border-radius: 50%; background-color: #fff; box-shadow: 0 4px 10px var(--shadow); padding: 10px; }
+        .subtitle { color: var(--accent); font-weight: bold; margin: 0; }
+        .toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .status-line { color: #5d6d7e; margin: 0 0 10px; font-size: 0.95rem; }
+        .shop-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; min-height: 100px; }
+        .product-card { background: var(--card); border-radius: 16px; padding: 14px; box-shadow: 0 10px 20px var(--shadow); transition: transform 0.2s ease; display: flex; flex-direction: column; gap: 8px; }
+        .product-card:hover { transform: translateY(-4px); }
+        .product-image { width: 100%; height: 240px; object-fit: cover; border-radius: 12px; background-color: #ececec; }
+        .product-name { margin: 4px 0; font-size: 1.1rem; }
+        .price-tag { font-size: 1rem; font-weight: 700; margin: 0; }
+        .row-actions { display: grid; gap: 8px; margin-top: auto; }
+        .btn-shop { border: none; padding: 10px 12px; border-radius: 10px; font-weight: 700; color: #fff; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease; }
+        .btn-shop:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12); }
+        .btn-whatsapp { background-color: var(--accent); }
+        .btn-whatsapp:hover { background-color: var(--accent-dark); }
+        .btn-call {
+            background: linear-gradient(135deg, var(--call) 0%, var(--call-deep) 100%);
+            justify-content: flex-start;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 14px 26px rgba(31, 142, 241, 0.28);
+        }
+        .btn-call::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,0.18), transparent 46%, transparent 54%, rgba(255,255,255,0.12));
+            pointer-events: none;
+        }
+        .btn-call .btn-icon {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(6px);
+        }
+        .btn-call .btn-copy { display: grid; gap: 2px; text-align: left; line-height: 1.1; position: relative; z-index: 1; }
+        .btn-call .btn-label { font-size: 0.98rem; letter-spacing: 0.01em; }
+        .btn-call .btn-meta { font-size: 0.72rem; color: rgba(255, 255, 255, 0.82); font-weight: 600; }
+        .btn-call .btn-copy,
+        .floating-actions .floating-copy { min-width: 0; }
+        .btn-call.is-disabled,
+        .floating-actions a.is-disabled {
+            background: linear-gradient(135deg, #9cb8d6 0%, #86a8cd 100%);
+            box-shadow: none;
+            pointer-events: none;
+            filter: grayscale(0.1);
+        }
+        .btn-link { text-align: center; background: #34495e; }
+        .placeholder { grid-column: 1 / -1; text-align: center; color: #687784; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 8px 18px var(--shadow); }
+        .floating-actions { position: fixed; right: 14px; bottom: 14px; display: grid; gap: 8px; z-index: 30; }
+        .floating-actions a { text-decoration: none; color: #fff; font-weight: 700; padding: 10px 12px; border-radius: 999px; box-shadow: 0 8px 16px rgba(0,0,0,0.18); display: inline-flex; align-items: center; gap: 10px; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .floating-actions a:hover { transform: translateY(-1px); box-shadow: 0 14px 24px rgba(0,0,0,0.2); }
+        .floating-actions .floating-icon { width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.22); }
+        .floating-actions .floating-copy { display: grid; gap: 1px; line-height: 1.05; }
+        .floating-actions .floating-copy strong { font-size: 0.9rem; }
+        .floating-actions .floating-copy small { font-size: 0.72rem; color: rgba(255,255,255,0.84); }
+        .floating-wa { background: var(--accent); }
+        .floating-call { background: linear-gradient(135deg, var(--call) 0%, var(--call-deep) 100%); animation: callPulse 2.6s ease-in-out infinite; }
+        footer { margin-top: 50px; padding: 24px; color: var(--muted); font-size: 0.85rem; text-align: center; border-top: 1px solid #ddd; width: 100%; }
+        @keyframes callPulse {
+            0%, 100% { box-shadow: 0 10px 18px rgba(31, 142, 241, 0.24); }
+            50% { box-shadow: 0 14px 28px rgba(31, 142, 241, 0.38); }
+        }
+        @media (max-width: 640px) {
+            body { padding: 12px 12px 120px; }
+            .brand-header { margin-bottom: 18px; }
+            .brand-header h1 { font-size: 1.55rem; }
+            .logo-img { width: 88px; height: 88px; padding: 8px; }
+            .toolbar { grid-template-columns: 1fr; }
+            .shop-container { grid-template-columns: 1fr; gap: 14px; }
+            .product-card { padding: 12px; border-radius: 14px; }
+            .product-image { height: 220px; }
+            .btn-call .btn-meta { font-size: 0.69rem; }
+            .floating-actions { right: 12px; left: 12px; bottom: 12px; }
+            .floating-actions a { justify-content: center; }
+        }
+        @media (max-width: 420px) {
+            .product-image { height: 200px; }
+            .floating-actions a { padding: 10px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .product-card,
+            .btn-shop,
+            .floating-actions a { transition: none; }
+            .floating-call { animation: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="brand-header">
+            <img id="brandLogo" src="logo.png" alt="RUGERO Agro-Daily Ltd Logo" class="logo-img">
+            <h1 id="brandName">RUGERO Agro-Daily Ltd</h1>
+            <p class="subtitle">Negotiate and Pay via WhatsApp</p>
+        </div>
+
+        <div class="toolbar">
+            <input id="searchInput" class="form-control" type="search" placeholder="Search products...">
+            <select id="sortSelect" class="form-select">
+                <option value="newest">Sort: Newest</option>
+                <option value="name_asc">Name: A-Z</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+            </select>
+        </div>
+
+        <p class="status-line" id="statusLine">Loading products...</p>
+        <div class="shop-container" id="shopContainer"></div>
+
+        <footer>
+            <p>&copy; 2026 RUGERO Agro-Daily Ltd Online Shop</p>
+            <a href="login.html">Staff Login</a>
+        </footer>
+    </div>
+
+    <div class="floating-actions">
+        <a id="floatingWhatsApp" class="floating-wa" href="#">WhatsApp</a>
+        <a id="floatingCall" class="floating-call" href="#">
+            <span class="floating-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.91.35 1.8.68 2.66a2 2 0 0 1-.45 2.11L8.07 9.93a16 16 0 0 0 6 6l1.44-1.27a2 2 0 0 1 2.11-.45c.86.33 1.75.56 2.66.68A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+            </span>
+            <span class="floating-copy">
+                <strong>Call Shop</strong>
+                <small>Quick support</small>
+            </span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./env.js"></script>
+    <script src="./supabase-client.js"></script>
+    <script>
+        const shopContainer = document.getElementById("shopContainer");
+        const statusLine = document.getElementById("statusLine");
+        const searchInput = document.getElementById("searchInput");
+        const sortSelect = document.getElementById("sortSelect");
+        const brandName = document.getElementById("brandName");
+        const brandLogo = document.getElementById("brandLogo");
+        const floatingWhatsApp = document.getElementById("floatingWhatsApp");
+        const floatingCall = document.getElementById("floatingCall");
+        const canonicalLink = document.getElementById("canonicalLink");
+        const ogUrl = document.getElementById("ogUrl");
+        const faviconLink = document.querySelector('link[rel="icon"]');
+        const phoneIconMarkup = `
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.91.35 1.8.68 2.66a2 2 0 0 1-.45 2.11L8.07 9.93a16 16 0 0 0 6 6l1.44-1.27a2 2 0 0 1 2.11-.45c.86.33 1.75.56 2.66.68A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+        `;
+
+        let supabaseClient;
+        let allProducts = [];
+        let productsPollId = null;
+        let productHandlersBound = false;
+        let productsLoadPromise = null;
+
+        function formatRwf(value) {
+            return new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(Number(value) || 0);
+        }
+
+        function fallbackImageSrc(label) {
+            const safeLabel = String(label || "Image")
+                .slice(0, 40)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+                    <rect width="640" height="640" fill="#e7edf2"/>
+                    <rect x="96" y="96" width="448" height="448" rx="42" fill="#ffffff" stroke="#c9d6e2" stroke-width="10"/>
+                    <text x="320" y="332" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" fill="#5d6d7e">${safeLabel}</text>
+                </svg>
+            `;
+            return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+        }
+
+        function attachImageFallback(imgEl, label) {
+            if (!imgEl || imgEl.dataset.fallbackBound === "true") return;
+            const fallbackSrc = fallbackImageSrc(label);
+            imgEl.dataset.fallbackBound = "true";
+            imgEl.addEventListener("error", () => {
+                if (imgEl.dataset.fallbackApplied === "true") return;
+                imgEl.dataset.fallbackApplied = "true";
+                imgEl.src = fallbackSrc;
+            });
+            if (!imgEl.getAttribute("src")) {
+                imgEl.dataset.fallbackApplied = "true";
+                imgEl.src = fallbackSrc;
+            }
+        }
+
+        function ensureFavicon() {
+            if (!faviconLink) return;
+            const iconHref = faviconLink.getAttribute("href") || "";
+            if (!iconHref) {
+                faviconLink.href = fallbackImageSrc("Shop");
+                return;
+            }
+
+            const probe = new Image();
+            probe.onerror = () => {
+                faviconLink.href = fallbackImageSrc("Shop");
+            };
+            probe.src = iconHref;
+        }
+
+        function escapeHtml(text) {
+            return String(text || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function getWhatsAppLink(message) {
+            const phone = (window.appConfig?.whatsappPhone || "").replace(/\D/g, "");
+            return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "#";
+        }
+
+        function getCallLink() {
+            const phone = (window.appConfig?.adminPhone || "").replace(/\s+/g, "");
+            return phone ? `tel:${phone}` : "#";
+        }
+
+        function productDisplayPrice(item) {
+            const unit = Number(item.price_per_unit) || 0;
+            const unitsPerBox = Number(item.units_per_box);
+            const manualBox = Number(item.price_per_box);
+            const canBox = Number.isFinite(unitsPerBox) && unitsPerBox > 0;
+            if (!canBox) return `Unit: ${formatRwf(unit)}`;
+            const box = Number.isFinite(manualBox) && manualBox > 0 ? manualBox : unit * unitsPerBox;
+            return `Unit: ${formatRwf(unit)} | Box: ${formatRwf(box)}`;
+        }
+
+        function applyFilters() {
+            const search = searchInput.value.trim().toLowerCase();
+            const sort = sortSelect.value;
+            let rows = [...allProducts];
+
+            if (search) {
+                rows = rows.filter((item) => String(item.name || "").toLowerCase().includes(search));
+            }
+
+            rows.sort((a, b) => {
+                if (sort === "name_asc") return String(a.name || "").localeCompare(String(b.name || ""));
+                if (sort === "price_asc") return (Number(a.price_per_unit) || 0) - (Number(b.price_per_unit) || 0);
+                if (sort === "price_desc") return (Number(b.price_per_unit) || 0) - (Number(a.price_per_unit) || 0);
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            });
+
+            renderProducts(rows);
+        }
+
+        function renderProducts(products) {
+            if (!products.length) {
+                shopContainer.innerHTML = '<div class="placeholder">No available products right now.</div>';
+                statusLine.textContent = "No available products.";
+                return;
+            }
+
+            statusLine.textContent = `${products.length} product(s) available.`;
+            shopContainer.innerHTML = products.map((item) => {
+                const safeName = escapeHtml(item.name || "Unnamed product");
+                const safeImage = escapeHtml(item.image || "");
+                const imageSrc = safeImage || fallbackImageSrc("Product image");
+                const hasStockFlag = Object.prototype.hasOwnProperty.call(item || {}, "is_in_stock");
+                const outOfStock = hasStockFlag
+                    ? !Boolean(item.is_in_stock)
+                    : (Number(item.product_quantity) || 0) <= 0;
+                const message = `Hello! I am interested in ${safeName} from ${window.appConfig.businessName}.`;
+                const callHref = getCallLink();
+                const callDisabled = callHref === "#";
+
+                return `
+                    <article class="product-card">
+                        <img src="${imageSrc}" alt="${safeName}" class="product-image" loading="lazy">
+                        <h3 class="product-name">${safeName}</h3>
+                        <p class="price-tag">${productDisplayPrice(item)}</p>
+                        <div class="row-actions">
+                            <button class="btn-shop btn-whatsapp" ${outOfStock ? "disabled" : ""} onclick="window.open('${getWhatsAppLink(message)}', '_blank')">WhatsApp</button>
+                            <a class="btn-shop btn-call${callDisabled ? " is-disabled" : ""}" href="${callHref}" ${callDisabled ? 'aria-disabled="true" tabindex="-1"' : ""}>
+                                <span class="btn-icon">${phoneIconMarkup}</span>
+                                <span class="btn-copy">
+                                    <span class="btn-label">Call Now</span>
+                                    <span class="btn-meta">${callDisabled ? "Number unavailable" : "Talk to the shop"}</span>
+                                </span>
+                            </a>
+                            <a class="btn-shop btn-link" href="product.html?id=${encodeURIComponent(item.id)}">View Details</a>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+
+            shopContainer.querySelectorAll(".product-image").forEach((img) => attachImageFallback(img, "Product image"));
+        }
+
+        async function loadProducts(options = {}) {
+            if (productsLoadPromise) return productsLoadPromise;
+
+            const showLoading = options.showLoading !== false;
+            productsLoadPromise = (async () => {
+                if (showLoading) {
+                    statusLine.textContent = "Loading products...";
+                    shopContainer.innerHTML = '<div class="placeholder">Loading products...</div>';
+                }
+
+                try {
+                    allProducts = await listStorefrontProducts(supabaseClient);
+                    applyFilters();
+                } catch (error) {
+                    console.error("Unexpected product load failure:", error);
+                    statusLine.textContent = "Unable to reach the shop service right now.";
+                    shopContainer.innerHTML = '<div class="placeholder">Unable to load products. Please try again later.</div>';
+                }
+            })();
+
+            try {
+                await productsLoadPromise;
+            } finally {
+                productsLoadPromise = null;
+            }
+        }
+
+        function stopProductSync() {
+            if (productsPollId) {
+                window.clearInterval(productsPollId);
+                productsPollId = null;
+            }
+        }
+
+        function scheduleProductRefresh() {
+            if (document.visibilityState === "hidden") return;
+            loadProducts({ showLoading: false });
+        }
+
+        function subscribeRealtime() {
+            if (!productsPollId) {
+                productsPollId = window.setInterval(scheduleProductRefresh, 30000);
+            }
+
+            if (productHandlersBound) return;
+
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible") {
+                    scheduleProductRefresh();
+                }
+            });
+            window.addEventListener("beforeunload", stopProductSync);
+            productHandlersBound = true;
+        }
+
+        function initFloatingButtons() {
+            floatingWhatsApp.href = getWhatsAppLink(`Hello! I want to order from ${window.appConfig.businessName}.`);
+            floatingWhatsApp.target = "_blank";
+            floatingWhatsApp.setAttribute("aria-disabled", floatingWhatsApp.href === "#" ? "true" : "false");
+            floatingCall.href = getCallLink();
+            floatingCall.setAttribute("aria-disabled", floatingCall.href === "#" ? "true" : "false");
+            floatingCall.classList.toggle("is-disabled", floatingCall.href === "#");
+        }
+
+        function updateSeoMetadata() {
+            const businessNameText = window.appConfig.businessName || "RUGERO Agro-Daily Ltd";
+            const title = `${businessNameText} | Online Shop`;
+            const description = `Shop ${businessNameText} online with direct WhatsApp ordering, product browsing, and quick contact options.`;
+            const canonicalUrl = `${window.location.origin}${window.location.pathname}`;
+
+            document.title = title;
+            brandName.textContent = businessNameText.toUpperCase();
+
+            const descriptionMeta = document.querySelector('meta[name="description"]');
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            const ogDescription = document.querySelector('meta[property="og:description"]');
+            const twitterTitle = document.querySelector('meta[property="twitter:title"]');
+            const twitterDescription = document.querySelector('meta[property="twitter:description"]');
+
+            if (descriptionMeta) descriptionMeta.setAttribute("content", description);
+            if (ogTitle) ogTitle.setAttribute("content", title);
+            if (ogDescription) ogDescription.setAttribute("content", description);
+            if (twitterTitle) twitterTitle.setAttribute("content", title);
+            if (twitterDescription) twitterDescription.setAttribute("content", description);
+            if (canonicalLink) canonicalLink.setAttribute("href", canonicalUrl);
+            if (ogUrl) ogUrl.setAttribute("content", canonicalUrl);
+        }
+
+        function init() {
+            try {
+                supabaseClient = createSupabaseClientOrFail();
+            } catch (error) {
+                statusLine.textContent = error.message || "Missing configuration.";
+                return;
+            }
+
+            updateSeoMetadata();
+            attachImageFallback(brandLogo, window.appConfig.businessName || "Shop");
+            ensureFavicon();
+            initFloatingButtons();
+            searchInput.addEventListener("input", applyFilters);
+            sortSelect.addEventListener("change", applyFilters);
+            loadProducts();
+            subscribeRealtime();
+        }
+
+        init();
+    </script>
+</body>
+</html>
