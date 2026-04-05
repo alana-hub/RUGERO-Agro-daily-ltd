@@ -21,9 +21,13 @@
         }
 
         * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 20px 20px 32px; }
         .wrap { max-width: 1300px; margin: 0 auto; }
         .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .taskbar { position: sticky; top: 10px; z-index: 1100; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.95); backdrop-filter: blur(6px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+        .taskbar-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border-radius: 999px; padding: 8px 12px; background: #e9f2fb; color: #24435f; border: 1px solid #d1e1f1; font-size: 0.84rem; font-weight: 700; }
+        .taskbar-link:hover { background: #deecfb; }
         h1 { margin: 0; font-size: 1.6rem; }
         h2 { margin: 0 0 10px; }
         .session-info { font-size: 0.92rem; color: var(--muted); margin-top: 4px; }
@@ -167,6 +171,8 @@
             body { padding: 12px; }
             h1 { font-size: 1.3rem; }
             .topbar { flex-direction: column; align-items: stretch; }
+            .taskbar { top: 8px; padding: 8px; gap: 6px; }
+            .taskbar-link { flex: 1 1 calc(50% - 6px); min-height: 36px; text-align: center; }
             .logout-btn { width: 100%; }
             .card { padding: 12px; }
             .form-grid,
@@ -193,6 +199,7 @@
         @media (max-width: 480px) {
             body { padding: 8px; }
             .wrap { max-width: 100%; }
+            .taskbar-link { flex-basis: 100%; font-size: 0.8rem; }
             .dashboard-grid { grid-template-columns: 1fr; }
             .thumb { width: 44px; height: 44px; }
             .card { border-radius: 10px; padding: 10px; }
@@ -225,6 +232,12 @@
             </div>
             <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
         </div>
+        <nav class="taskbar" aria-label="Quick admin navigation">
+            <a class="taskbar-link" href="#inventorySection">Inventory</a>
+            <a class="taskbar-link" href="#salesDashboardSection">Sales Dashboard</a>
+            <a class="taskbar-link" href="#smartAlertsSection">Smart Alerts</a>
+            <a class="taskbar-link" href="#salesReportSection">Sales Report</a>
+        </nav>
 
         <section class="card">
             <h2>Upload Product / Add Stock</h2>
@@ -279,7 +292,7 @@
             <div id="formStatus" class="status"></div>
         </section>
 
-        <section class="card">
+        <section id="inventorySection" class="card">
             <h2 id="inventoryTitle">Inventory</h2>
             <p class="muted">Live updates enabled via Supabase Realtime.</p>
             <div class="filter-grid" style="margin: 10px 0 6px;">
@@ -315,7 +328,7 @@
             </div>
         </section>
 
-        <section class="card">
+        <section id="salesDashboardSection" class="card">
             <h2>Sales Dashboard</h2>
             <div id="salesStatus" class="status">Loading sales...</div>
             <div class="dashboard-grid">
@@ -323,10 +336,11 @@
                 <div class="metric"><div class="metric-label">Total Cost</div><div id="metricTotalCost" class="metric-value">RWF 0</div></div>
                 <div class="metric"><div class="metric-label">Total Profit</div><div id="metricTotalProfit" class="metric-value">RWF 0</div></div>
                 <div class="metric"><div class="metric-label">Daily Profit</div><div id="metricDailyProfit" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Today's Sold Profit</div><div id="metricTodaySoldProfit" class="metric-value">RWF 0</div></div>
                 <div class="metric"><div class="metric-label">Monthly Profit</div><div id="metricMonthlyProfit" class="metric-value">RWF 0</div></div>
                 <div class="metric"><div class="metric-label">Total Sold Items</div><div id="metricSoldItems" class="metric-value">0</div></div>
             </div>
-            <h3>Smart Alerts</h3>
+            <h3 id="smartAlertsSection">Smart Alerts</h3>
             <div id="alertsStatus" class="status">Loading alerts...</div>
             <ul id="smartAlerts" class="alert-list">
                 <li>No alerts right now.</li>
@@ -355,7 +369,7 @@
             </div>
         </section>
 
-        <section class="card">
+        <section id="salesReportSection" class="card">
             <h2>Sales Report</h2>
             <div class="filter-grid">
                 <div><label for="filterFrom">From</label><input id="filterFrom" type="date"></div>
@@ -384,6 +398,27 @@
                         <tr><td colspan="9">Loading...</td></tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="notification-panel" style="margin-top:12px;">
+                <h3>Sales Summary (Filtered)</h3>
+                <div class="dashboard-grid">
+                    <div class="metric">
+                        <div class="metric-label">Total Revenue (Sold Items)</div>
+                        <div id="summaryTotalRevenue" class="metric-value">RWF 0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Total Cost (Sold Items)</div>
+                        <div id="summaryTotalCost" class="metric-value">RWF 0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Total Profit (Sold Items)</div>
+                        <div id="summaryTotalProfit" class="metric-value">RWF 0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Total Sold Units (Filtered)</div>
+                        <div id="summarySoldUnits" class="metric-value">0</div>
+                    </div>
+                </div>
             </div>
         </section>
     </div>
