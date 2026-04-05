@@ -27,6 +27,9 @@
     const formStatus = document.getElementById("formStatus");
     const inventoryStatus = document.getElementById("inventoryStatus");
     const inventoryBody = document.getElementById("inventoryBody");
+    const inventorySearch = document.getElementById("inventorySearch");
+    const clearInventorySearchBtn = document.getElementById("clearInventorySearchBtn");
+    const inventorySearchStatus = document.getElementById("inventorySearchStatus");
     const salesStatus = document.getElementById("salesStatus");
     const salesBody = document.getElementById("salesBody");
     const alertsStatus = document.getElementById("alertsStatus");
@@ -59,6 +62,7 @@
     let dailyRevenueChart = null;
     let topProductsChart = null;
     let inventoryRows = [];
+    let inventorySearchTerm = "";
     let salesReportRows = [];
     let pendingDuplicateProduct = null;
     let persistedAlerts = [];
@@ -105,6 +109,14 @@
 
     function normalizeName(name) {
         return String(name || "").trim().replace(/\s+/g, " ").toLowerCase();
+    }
+
+    function normalizeSearchText(value) {
+        return String(value || "").trim().toLowerCase();
+    }
+
+    function sanitizeProductName(name) {
+        return String(name || "").trim().replace(/\s+/g, " ");
     }
 
     function toNumber(value, fallback = 0) {
@@ -695,8 +707,9 @@
         if (!values.name || values.quantity <= 0 || !Number.isFinite(values.price_per_unit) || values.price_per_unit < 0 || !Number.isFinite(values.purchase_price) || values.purchase_price < 0) {
             return "Please provide valid product details.";
         }
-        if (values.name.length > 120) {
-            return "Product name is too long.";
+        const safeName = sanitizeProductName(values.name);
+        if (safeName.length > 120) {
+            return "Product name is too long (max 120 characters).";
         }
         if (values.units_per_box !== null && values.units_per_box <= 0) {
             return "Units per box must be greater than 0.";
@@ -792,6 +805,41 @@
 
         const resultRow = Array.isArray(data) ? data[0] : data;
         return !!resultRow?.price_changed;
+    }
+
+    async function updateExistingProductName(existing, nextName) {
+        const cleanedName = sanitizeProductName(nextName);
+        if (!cleanedName) {
+            throw new Error("Product name cannot be empty.");
+        }
+        if (cleanedName.length > 120) {
+            throw new Error("Product name is too long (max 120 characters).");
+        }
+
+        const currentNormalized = normalizeName(existing.name);
+        const nextNormalized = normalizeName(cleanedName);
+        if (!nextNormalized) {
+            throw new Error("Product name cannot be empty.");
+        }
+        if (currentNormalized === nextNormalized) {
+            return { changed: false };
+        }
+
+        const conflicting = await findExistingProduct(cleanedName, "");
+        if (conflicting && String(conflicting.id) !== String(existing.id)) {
+            throw new Error("Another product already uses that name.");
+        }
+
+        const { error } = await supabaseClient
+            .from("products")
+            .update({ name: cleanedName })
+            .eq("id", existing.id);
+
+        if (error) {
+            throw new Error(error.message || "Failed to rename product.");
+        }
+
+        return { changed: true, name: cleanedName };
     }
 
     async function processProductForm(mode) {
@@ -987,12 +1035,51 @@
                             <button type="button" class="btn btn-success" ${soldOut ? "disabled" : ""} onclick="sellProduct('${item.id}', 'unit')">Sell Unit</button>
                             <button type="button" class="btn btn-success" ${soldOut || !canSellBox || qty < upb ? "disabled" : ""} onclick="sellProduct('${item.id}', 'box')">Sell Box</button>
                             <button type="button" class="btn btn-primary" onclick="prefillStockForm('${item.id}')">Add Stock</button>
+                            <button type="button" class="btn btn-primary" onclick="editProductName('${item.id}')">Edit Name</button>
                             <button type="button" class="btn btn-danger" ${soldOut ? "disabled" : ""} onclick="markSold('${item.id}', this)">Mark as Sold</button>
                         </div>
                     </td>
                 </tr>
             `;
         }).join("");
+    }
+
+    function inventorySearchBlob(item) {
+        const alerts = productAlertMessages(item).join(" ");
+        return normalizeSearchText([
+            item.name,
+            item.id,
+            item.status,
+            alerts
+        ].filter(Boolean).join(" "));
+    }
+
+    function filteredInventoryRows() {
+        const term = normalizeSearchText(inventorySearchTerm);
+        if (!term) return inventoryRows;
+        return inventoryRows.filter((item) => inventorySearchBlob(item).includes(term));
+    }
+
+    function updateInventorySearchMessage(filteredCount, totalCount) {
+        if (!inventorySearchStatus) return;
+        if (!inventorySearchTerm) {
+            inventorySearchStatus.textContent = "";
+            return;
+        }
+
+        inventorySearchStatus.textContent = filteredCount === totalCount
+            ? `${filteredCount} product(s) found for "${inventorySearchTerm}".`
+            : `${filteredCount} of ${totalCount} product(s) found for "${inventorySearchTerm}".`;
+    }
+
+    function rerenderInventoryForSearch() {
+        const filtered = filteredInventoryRows();
+        updateInventorySearchMessage(filtered.length, inventoryRows.length);
+        if (!filtered.length && inventoryRows.length && inventorySearchTerm) {
+            inventoryBody.innerHTML = '<tr><td colspan="9">No matching products for this search.</td></tr>';
+            return;
+        }
+        renderInventory(filtered);
     }
 
     async function loadInventory() {
@@ -1189,6 +1276,33 @@
         document.getElementById("pricePerBox").value = toNumber(row.price_per_box, 0) > 0 ? row.price_per_box : "";
         document.getElementById("purchasePrice").value = "0";
         setStatus(formStatus, `Adding stock to ${row.name}.`);
+    };
+
+    window.editProductName = async function(productId) {
+        const row = inventoryRows.find((x) => String(x.id) === String(productId));
+        if (!row) {
+            alert("Product not found.");
+            return;
+        }
+
+        const ask = window.prompt("Enter the new product name", row.name || "");
+        if (ask === null) return;
+
+        try {
+            setStatus(inventoryStatus, `Updating name for ${row.name || "product"}...`);
+            const result = await updateExistingProductName(row, ask);
+            if (!result.changed) {
+                setStatus(inventoryStatus, "Product name is unchanged.", "warn");
+                return;
+            }
+            setStatus(inventoryStatus, `Product renamed to ${result.name}.`, "success");
+            await loadInventory();
+            await refreshSalesDashboard(false);
+        } catch (error) {
+            console.error(error);
+            setStatus(inventoryStatus, error.message || "Failed to rename product.", "error");
+            alert(error.message || "Failed to rename product.");
+        }
     };
 
     window.sellProduct = async function(productId, saleType) {
@@ -1693,7 +1807,7 @@
             setStatus(alertsStatus, "Using local alert fallback. Apply the latest schema.sql to enable the full admin alert lifecycle.", "warn");
         }
 
-        renderInventory(inventoryRows);
+        rerenderInventoryForSearch();
         renderSmartAlerts(inventoryRows);
     }
 
@@ -1819,8 +1933,59 @@
         return `"${String(value ?? "").replace(/"/g, '""')}"`;
     }
 
-    function downloadCsv(fileName, content) {
-        const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    function isAppleMobileDevice() {
+        const ua = navigator.userAgent || "";
+        const platform = navigator.platform || "";
+        const maxTouchPoints = navigator.maxTouchPoints || 0;
+        return /iPad|iPhone|iPod/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
+    }
+
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(new Error("Could not prepare CSV download link."));
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function downloadCsv(fileName, content) {
+        const csvWithBom = `\uFEFF${content}`;
+        const blob = new Blob([csvWithBom], { type: "text/csv;charset=utf-8;" });
+
+        if (typeof File === "function" && navigator?.share && typeof navigator.share === "function") {
+            try {
+                const csvFile = new File([blob], fileName, { type: "text/csv;charset=utf-8;" });
+                if (!navigator.canShare || navigator.canShare({ files: [csvFile] })) {
+                    await navigator.share({
+                        files: [csvFile],
+                        title: fileName,
+                        text: "Sales report CSV export"
+                    });
+                    return "share";
+                }
+            } catch (error) {
+                const aborted = error?.name === "AbortError";
+                if (aborted) return "cancelled";
+                console.warn("Share API export failed, falling back to direct download.", error);
+            }
+        }
+
+        if (isAppleMobileDevice()) {
+            const dataUrl = await blobToDataUrl(blob);
+            const opened = window.open(dataUrl, "_blank");
+            if (opened) return "ios_open";
+
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.target = "_blank";
+            link.rel = "noopener";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            return "ios_link";
+        }
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1829,6 +1994,7 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
+        return "download";
     }
 
     async function exportSalesCsv() {
@@ -1868,8 +2034,19 @@
                 lines.push(headers.map((h) => csvCell(out[h])).join(","));
             }
 
-            downloadCsv(`sales-report-${todayDateKey()}.csv`, `${lines.join("\n")}\n`);
-            setStatus(salesStatus, `Exported ${filtered.length} report record(s).`, "success");
+            const method = await downloadCsv(`sales-report-${todayDateKey()}.csv`, `${lines.join("\n")}\n`);
+            if (method === "cancelled") {
+                setStatus(salesStatus, "Export canceled.", "warn");
+                return;
+            }
+            const viaShare = method === "share";
+            setStatus(
+                salesStatus,
+                viaShare
+                    ? `Export prepared for sharing with ${filtered.length} report record(s).`
+                    : `Exported ${filtered.length} report record(s).`,
+                "success"
+            );
         } catch (error) {
             console.error(error);
             setStatus(salesStatus, error.message || "Failed to export sales CSV.", "error");
@@ -1946,6 +2123,19 @@
         filterTo.addEventListener("change", renderSalesDashboardFromCurrentFilters);
         filterProduct.addEventListener("input", renderSalesDashboardFromCurrentFilters);
         filterSaleType.addEventListener("change", renderSalesDashboardFromCurrentFilters);
+        if (inventorySearch) {
+            inventorySearch.addEventListener("input", () => {
+                inventorySearchTerm = inventorySearch.value.trim();
+                rerenderInventoryForSearch();
+            });
+        }
+        if (clearInventorySearchBtn) {
+            clearInventorySearchBtn.addEventListener("click", () => {
+                inventorySearchTerm = "";
+                if (inventorySearch) inventorySearch.value = "";
+                rerenderInventoryForSearch();
+            });
+        }
         if (smartAlerts) smartAlerts.addEventListener("click", handleAlertActionClick);
         if (notificationList) notificationList.addEventListener("click", handleAlertActionClick);
         if (alertPopupStack) alertPopupStack.addEventListener("click", handleAlertPopupClick);
