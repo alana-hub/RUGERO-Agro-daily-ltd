@@ -418,7 +418,15 @@
                         <div class="metric-label">Total Sold Units (Filtered)</div>
                         <div id="summarySoldUnits" class="metric-value">0</div>
                     </div>
+                    <div class="metric">
+                        <div class="metric-label">Today's Profit (Sold Items)</div>
+                        <div id="summaryTodayProfit" class="metric-value">RWF 0</div>
+                    </div>
                 </div>
+                <div class="subactions" style="margin-top:10px;">
+                    <button id="recalcTodayProfitBtn" class="btn btn-primary" type="button">Recalculate Today's Sales Profit</button>
+                </div>
+                <div class="helper-text">This action updates today's sales rows in the database to use: selling price minus cost price.</div>
             </div>
         </section>
     </div>
