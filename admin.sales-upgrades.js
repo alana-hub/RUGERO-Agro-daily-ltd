@@ -1966,6 +1966,17 @@
         if (recalcTodayProfitBtn) recalcTodayProfitBtn.disabled = true;
 
         try {
+            const rpcAttempt = await supabaseClient.rpc("recalculate_today_sales_profit", {
+                p_day: dayKey
+            });
+            if (!rpcAttempt.error) {
+                const rpcResult = Array.isArray(rpcAttempt.data) ? rpcAttempt.data[0] : rpcAttempt.data;
+                const updatedCount = Math.max(0, Math.floor(toNumber(rpcResult?.updated_count ?? rpcResult?.updated ?? rpcResult, 0)));
+                await refreshSalesDashboard(false);
+                setStatus(salesStatus, `Updated ${updatedCount} today's sale(s) with the profit formula.`, "success");
+                return;
+            }
+
             const salesRows = await loadSalesRaw();
             const todaysRows = salesRows.filter((row) => {
                 const status = String(row.status || "").toLowerCase();
@@ -1979,6 +1990,7 @@
             }
 
             let updated = 0;
+            let failed = 0;
             for (const row of todaysRows) {
                 if (!row?.id) continue;
                 const computedProfit = roundMoney(saleRevenue(row) - saleCost(row));
@@ -1991,13 +2003,24 @@
                     .from("sales")
                     .update({ profit: computedProfit })
                     .eq("id", row.id);
-                if (error) throw new Error(error.message || "Failed to update one of today's sales rows.");
+                if (error) {
+                    failed += 1;
+                    continue;
+                }
                 updated += 1;
             }
 
             await refreshSalesDashboard(false);
-            if (updated === 0) {
+            if (updated === 0 && failed === 0) {
                 setStatus(salesStatus, "Today's sales were already using selling price minus cost price.", "success");
+            } else if (failed > 0 && updated === 0) {
+                setStatus(
+                    salesStatus,
+                    "Could not update today's sales from this browser session. Apply the backend RPC/policy update, then retry.",
+                    "error"
+                );
+            } else if (failed > 0) {
+                setStatus(salesStatus, `Updated ${updated} sale(s), but ${failed} row(s) could not be updated.`, "warn");
             } else {
                 setStatus(salesStatus, `Updated ${updated} today's sale(s) with the profit formula.`, "success");
             }
