@@ -183,10 +183,36 @@
             .alert-popup { padding: 14px; }
             .alert-popup-top { gap: 10px; }
             .alert-popup-actions .alert-action-btn { flex-basis: 100%; }
+            .alert-popup-title { font-size: 0.96rem; }
+            .alert-popup-message { font-size: 0.88rem; line-height: 1.4; }
+            .alert-popup-meta { font-size: 0.76rem; }
+            .alert-popup-product { font-size: 0.84rem; }
+            .alert-action-btn { font-size: 0.78rem; padding: 7px 9px; }
+            .alert-badge { font-size: 0.68rem; padding: 3px 7px; }
         }
         @media (max-width: 480px) {
+            body { padding: 8px; }
+            .wrap { max-width: 100%; }
             .dashboard-grid { grid-template-columns: 1fr; }
-            .thumb { width: 48px; height: 48px; }
+            .thumb { width: 44px; height: 44px; }
+            .card { border-radius: 10px; padding: 10px; }
+            .btn { padding: 9px 10px; font-size: 0.85rem; }
+            input, select { padding: 9px; font-size: 0.9rem; }
+            th, td { padding: 8px; }
+            .alert-popups { top: 8px; right: 8px; width: calc(100vw - 16px); gap: 8px; }
+            .alert-popup { border-radius: 14px; padding: 11px; gap: 8px; }
+            .alert-popup-top { padding-right: 30px; gap: 8px; }
+            .alert-popup-icon { width: 38px; height: 38px; border-radius: 11px; font-size: 0.62rem; }
+            .alert-popup-close { width: 26px; height: 26px; top: 8px; right: 8px; font-size: 0.9rem; }
+            .alert-popup-title { font-size: 0.88rem; }
+            .alert-popup-body { border-radius: 10px; padding: 8px 9px; }
+            .alert-popup-message { font-size: 0.8rem; }
+            .alert-popup-meta { margin-top: 6px; font-size: 0.7rem; line-height: 1.35; }
+            .alert-popup-actions { gap: 6px; }
+            .alert-popup-actions .alert-action-btn { min-height: 34px; padding: 8px 9px; font-size: 0.74rem; border-radius: 8px; }
+            .alert-item, .alert-history-item { padding: 9px; border-radius: 8px; margin-top: 8px; }
+            .alert-message { font-size: 0.88rem; line-height: 1.35; }
+            .alert-meta { font-size: 0.74rem; margin-top: 4px; }
         }
     </style>
 </head>
@@ -256,6 +282,16 @@
         <section class="card">
             <h2 id="inventoryTitle">Inventory</h2>
             <p class="muted">Live updates enabled via Supabase Realtime.</p>
+            <div class="filter-grid" style="margin: 10px 0 6px;">
+                <div>
+                    <label for="inventorySearch">Search Inventory</label>
+                    <input id="inventorySearch" type="search" placeholder="Search by name, ID, status, or alert text">
+                </div>
+                <div>
+                    <button id="clearInventorySearchBtn" class="btn btn-danger" type="button">Clear Search</button>
+                </div>
+            </div>
+            <div id="inventorySearchStatus" class="muted"></div>
             <div id="inventoryStatus" class="status">Loading inventory...</div>
             <div class="table-wrap">
                 <table>
@@ -357,6 +393,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="./env.js"></script>
     <script src="./supabase-client.js"></script>
-    <script src="./admin.sales-upgrades.js?v=20260331v2"></script>
+    <script src="./admin.sales-upgrades.js?v=20260405v1"></script>
 </body>
 </html>
