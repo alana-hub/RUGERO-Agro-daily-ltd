@@ -36,6 +36,8 @@
     const summaryTotalCost = document.getElementById("summaryTotalCost");
     const summaryTotalProfit = document.getElementById("summaryTotalProfit");
     const summarySoldUnits = document.getElementById("summarySoldUnits");
+    const summaryTodayProfit = document.getElementById("summaryTodayProfit");
+    const recalcTodayProfitBtn = document.getElementById("recalcTodayProfitBtn");
     const alertsStatus = document.getElementById("alertsStatus");
     const smartAlerts = document.getElementById("smartAlerts");
     const exportCsvBtn = document.getElementById("exportCsvBtn");
@@ -1459,6 +1461,10 @@
         return saleRevenue(row) - saleCost(row);
     }
 
+    function profitFromSaleAmounts(row) {
+        return roundMoney(toNumber(row.revenue, 0) - toNumber(row.cost, 0));
+    }
+
     function saleType(row) {
         if (row.sale_type === "box" || row.sale_type === "unit") return row.sale_type;
         return "unit";
@@ -1490,7 +1496,7 @@
             quantity: Math.max(1, toNumber(row.quantity, 1)),
             revenue: saleRevenue(row),
             cost: saleCost(row),
-            profit: saleProfit(row),
+            profit: roundMoney(saleRevenue(row) - saleCost(row)),
             status: saleStatus(row),
             raw: row
         }));
@@ -1569,6 +1575,8 @@
         let totalCost = 0;
         let totalProfit = 0;
         let soldUnits = 0;
+        let todayProfit = 0;
+        const dayKey = todayDateKey();
 
         for (const row of rows) {
             if (row.kind !== "sale") continue;
@@ -1576,14 +1584,19 @@
             if (status === "returned" || status === "cancelled" || status === "void") continue;
             totalRevenue += toNumber(row.revenue, 0);
             totalCost += toNumber(row.cost, 0);
-            totalProfit += toNumber(row.profit, 0);
+            const saleProfit = profitFromSaleAmounts(row);
+            totalProfit += saleProfit;
             soldUnits += Math.max(1, toNumber(row.raw?.units_sold, toNumber(row.quantity, 1)));
+            if (toCalendarDateKey(row.date) === dayKey) {
+                todayProfit += saleProfit;
+            }
         }
 
         if (summaryTotalRevenue) summaryTotalRevenue.textContent = formatRwf(totalRevenue);
         if (summaryTotalCost) summaryTotalCost.textContent = formatRwf(totalCost);
         if (summaryTotalProfit) summaryTotalProfit.textContent = formatRwf(totalProfit);
         if (summarySoldUnits) summarySoldUnits.textContent = String(soldUnits);
+        if (summaryTodayProfit) summaryTodayProfit.textContent = formatRwf(todayProfit);
     }
 
     function renderMetrics(rows) {
@@ -1604,7 +1617,7 @@
             const soldStatus = status === "completed" || status === "sold";
             const rev = toNumber(row.revenue, 0);
             const cost = toNumber(row.cost, 0);
-            const profit = toNumber(row.profit, 0);
+            const profit = profitFromSaleAmounts(row);
             const qty = Math.max(1, toNumber(row.raw?.units_sold, toNumber(row.quantity, 1)));
             const dateKey = toCalendarDateKey(row.date);
             const monthKey = toCalendarMonthKey(row.date);
@@ -1947,6 +1960,55 @@
         setStatus(salesStatus, `${filtered.length} report record(s).`);
     }
 
+    async function recalculateTodaySalesProfit() {
+        const dayKey = todayDateKey();
+        setStatus(salesStatus, "Recalculating today's sales profit...");
+        if (recalcTodayProfitBtn) recalcTodayProfitBtn.disabled = true;
+
+        try {
+            const salesRows = await loadSalesRaw();
+            const todaysRows = salesRows.filter((row) => {
+                const status = String(row.status || "").toLowerCase();
+                if (status === "returned" || status === "cancelled" || status === "void") return false;
+                return toCalendarDateKey(saleDate(row)) === dayKey;
+            });
+
+            if (!todaysRows.length) {
+                setStatus(salesStatus, "No sales found for today.", "warn");
+                return;
+            }
+
+            let updated = 0;
+            for (const row of todaysRows) {
+                if (!row?.id) continue;
+                const computedProfit = roundMoney(saleRevenue(row) - saleCost(row));
+                const currentProfit = toNumber(row.profit, NaN);
+                if (Number.isFinite(currentProfit) && Math.abs(currentProfit - computedProfit) < 0.0001) {
+                    continue;
+                }
+
+                const { error } = await supabaseClient
+                    .from("sales")
+                    .update({ profit: computedProfit })
+                    .eq("id", row.id);
+                if (error) throw new Error(error.message || "Failed to update one of today's sales rows.");
+                updated += 1;
+            }
+
+            await refreshSalesDashboard(false);
+            if (updated === 0) {
+                setStatus(salesStatus, "Today's sales were already using selling price minus cost price.", "success");
+            } else {
+                setStatus(salesStatus, `Updated ${updated} today's sale(s) with the profit formula.`, "success");
+            }
+        } catch (error) {
+            console.error(error);
+            setStatus(salesStatus, error.message || "Failed to recalculate today's sales profit.", "error");
+        } finally {
+            if (recalcTodayProfitBtn) recalcTodayProfitBtn.disabled = false;
+        }
+    }
+
     async function refreshSalesDashboard(showLoading = true) {
         if (showLoading) setStatus(salesStatus, "Loading sales...");
         try {
@@ -2156,6 +2218,7 @@
         filterTo.addEventListener("change", renderSalesDashboardFromCurrentFilters);
         filterProduct.addEventListener("input", renderSalesDashboardFromCurrentFilters);
         filterSaleType.addEventListener("change", renderSalesDashboardFromCurrentFilters);
+        if (recalcTodayProfitBtn) recalcTodayProfitBtn.addEventListener("click", recalculateTodaySalesProfit);
         if (inventorySearch) {
             inventorySearch.addEventListener("input", () => {
                 inventorySearchTerm = inventorySearch.value.trim();
