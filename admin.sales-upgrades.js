@@ -32,6 +32,10 @@
     const inventorySearchStatus = document.getElementById("inventorySearchStatus");
     const salesStatus = document.getElementById("salesStatus");
     const salesBody = document.getElementById("salesBody");
+    const summaryTotalRevenue = document.getElementById("summaryTotalRevenue");
+    const summaryTotalCost = document.getElementById("summaryTotalCost");
+    const summaryTotalProfit = document.getElementById("summaryTotalProfit");
+    const summarySoldUnits = document.getElementById("summarySoldUnits");
     const alertsStatus = document.getElementById("alertsStatus");
     const smartAlerts = document.getElementById("smartAlerts");
     const exportCsvBtn = document.getElementById("exportCsvBtn");
@@ -53,6 +57,7 @@
     const metricTotalCost = document.getElementById("metricTotalCost");
     const metricTotalProfit = document.getElementById("metricTotalProfit");
     const metricDailyProfit = document.getElementById("metricDailyProfit");
+    const metricTodaySoldProfit = document.getElementById("metricTodaySoldProfit");
     const metricMonthlyProfit = document.getElementById("metricMonthlyProfit");
     const metricSoldItems = document.getElementById("metricSoldItems");
 
@@ -1559,12 +1564,35 @@
         }).join("");
     }
 
+    function renderSalesSummary(rows) {
+        let totalRevenue = 0;
+        let totalCost = 0;
+        let totalProfit = 0;
+        let soldUnits = 0;
+
+        for (const row of rows) {
+            if (row.kind !== "sale") continue;
+            const status = String(row.status || "").toLowerCase();
+            if (status === "returned" || status === "cancelled" || status === "void") continue;
+            totalRevenue += toNumber(row.revenue, 0);
+            totalCost += toNumber(row.cost, 0);
+            totalProfit += toNumber(row.profit, 0);
+            soldUnits += Math.max(1, toNumber(row.raw?.units_sold, toNumber(row.quantity, 1)));
+        }
+
+        if (summaryTotalRevenue) summaryTotalRevenue.textContent = formatRwf(totalRevenue);
+        if (summaryTotalCost) summaryTotalCost.textContent = formatRwf(totalCost);
+        if (summaryTotalProfit) summaryTotalProfit.textContent = formatRwf(totalProfit);
+        if (summarySoldUnits) summarySoldUnits.textContent = String(soldUnits);
+    }
+
     function renderMetrics(rows) {
         let totalRevenue = 0;
         let totalCost = 0;
         let totalProfit = 0;
         let soldItems = 0;
         let dailyProfit = 0;
+        let todaySoldProfit = 0;
         let monthlyProfit = 0;
         const day = todayDateKey();
         const month = monthDateKey();
@@ -1573,6 +1601,7 @@
             if (row.kind !== "sale") continue;
             const status = String(row.status).toLowerCase();
             if (status === "returned" || status === "cancelled" || status === "void") continue;
+            const soldStatus = status === "completed" || status === "sold";
             const rev = toNumber(row.revenue, 0);
             const cost = toNumber(row.cost, 0);
             const profit = toNumber(row.profit, 0);
@@ -1585,6 +1614,7 @@
             totalProfit += profit;
             soldItems += qty;
             if (dateKey === day) dailyProfit += profit;
+            if (dateKey === day && soldStatus) todaySoldProfit += profit;
             if (monthKey === month) monthlyProfit += profit;
         }
 
@@ -1592,6 +1622,7 @@
         metricTotalCost.textContent = formatRwf(totalCost);
         metricTotalProfit.textContent = formatRwf(totalProfit);
         metricDailyProfit.textContent = formatRwf(dailyProfit);
+        if (metricTodaySoldProfit) metricTodaySoldProfit.textContent = formatRwf(todaySoldProfit);
         metricMonthlyProfit.textContent = formatRwf(monthlyProfit);
         metricSoldItems.textContent = String(soldItems);
     }
@@ -1910,6 +1941,7 @@
     function renderSalesDashboardFromCurrentFilters() {
         const filtered = applySalesFilters(salesReportRows);
         renderSales(filtered);
+        renderSalesSummary(filtered);
         renderMetrics(filtered);
         renderCharts(filtered);
         setStatus(salesStatus, `${filtered.length} report record(s).`);
@@ -1926,6 +1958,7 @@
             console.error(error);
             setStatus(salesStatus, error.message || "Failed to load sales.", "error");
             salesBody.innerHTML = '<tr><td colspan="9">Failed to load sales records.</td></tr>';
+            renderSalesSummary([]);
         }
     }
 
