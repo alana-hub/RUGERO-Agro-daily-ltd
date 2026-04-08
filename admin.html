@@ -59,6 +59,10 @@
         .metric-value { font-size: 1.15rem; font-weight: 700; }
         .alert-list { margin: 0; padding: 0; list-style: none; color: #314658; }
         .helper-text { margin-top: 8px; color: var(--muted); font-size: 0.88rem; }
+        .status-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+        .status-chip.taken { background: #fff4cc; color: #8a5a00; border: 1px solid #f0d884; }
+        .status-chip.paid { background: #e4f7eb; color: #1b7d4d; border: 1px solid #b8e2ca; }
+        .status-chip.returned { background: #fde7e7; color: #a12525; border: 1px solid #f2c2c2; }
         .duplicate-panel { border: 1px solid #f3d5a3; background: #fffaf0; border-radius: 10px; padding: 14px; margin-top: 14px; display: none; }
         .duplicate-panel.active { display: block; }
         .duplicate-title { margin: 0 0 8px; font-weight: 700; color: #6f4d00; }
@@ -114,6 +118,33 @@
         @keyframes alert-popup-in {
             from { opacity: 0; transform: translateY(-10px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* Mobile toast mode: compact alerts for small screens (<= 768px). */
+        @media (max-width: 768px) {
+            .alert-popups {
+                top: auto;
+                right: 10px;
+                bottom: 10px;
+                width: calc(100vw - 20px);
+                max-width: 360px;
+                gap: 8px;
+            }
+            .alert-popup {
+                border-radius: 12px;
+                padding: 10px 12px;
+                gap: 6px;
+                box-shadow: 0 10px 24px rgba(16, 31, 45, 0.22);
+            }
+            .alert-popup::after { display: none; }
+            .alert-popup-top { padding-right: 30px; gap: 8px; }
+            .alert-popup-icon { width: 34px; height: 34px; border-radius: 10px; font-size: 0.62rem; }
+            .alert-popup-title { font-size: 0.86rem; }
+            .alert-popup-product { margin-top: 2px; font-size: 0.78rem; }
+            .alert-popup-body { border-radius: 10px; padding: 8px; }
+            .alert-popup-message { font-size: 0.78rem; line-height: 1.3; }
+            .alert-popup-meta { margin-top: 5px; font-size: 0.68rem; line-height: 1.25; }
+            .alert-popup-actions { display: none; }
+            .alert-popup-close { width: 24px; height: 24px; top: 7px; right: 7px; font-size: 0.88rem; }
         }
         .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
         .chart-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fff; min-height: 320px; }
@@ -237,6 +268,7 @@
             <a class="taskbar-link" href="#salesDashboardSection">Sales Dashboard</a>
             <a class="taskbar-link" href="#smartAlertsSection">Smart Alerts</a>
             <a class="taskbar-link" href="#salesReportSection">Sales Report</a>
+            <a class="taskbar-link" href="unpaid.html">Unpaid / Rent Items</a>
         </nav>
 
         <section class="card">
@@ -334,10 +366,10 @@
             <div class="dashboard-grid">
                 <div class="metric"><div class="metric-label">Total Revenue</div><div id="metricTotalRevenue" class="metric-value">RWF 0</div></div>
                 <div class="metric"><div class="metric-label">Total Cost</div><div id="metricTotalCost" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Total Profit</div><div id="metricTotalProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Daily Profit</div><div id="metricDailyProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Today's Sold Profit</div><div id="metricTodaySoldProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Monthly Profit</div><div id="metricMonthlyProfit" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Total Gross Profit</div><div id="metricTotalProfit" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Daily Gross Profit</div><div id="metricDailyProfit" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Today's Sold Gross Profit</div><div id="metricTodaySoldProfit" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Monthly Gross Profit</div><div id="metricMonthlyProfit" class="metric-value">RWF 0</div></div>
                 <div class="metric"><div class="metric-label">Total Sold Items</div><div id="metricSoldItems" class="metric-value">0</div></div>
             </div>
             <h3 id="smartAlertsSection">Smart Alerts</h3>
@@ -388,14 +420,19 @@
                             <th>Product</th>
                             <th>Details</th>
                             <th>Qty</th>
+                            <th>Units Sold</th>
+                            <th>Selling Price / Unit</th>
+                            <th>Cost / Unit</th>
                             <th>Revenue</th>
                             <th>Cost</th>
-                            <th>Profit</th>
+                            <th>Gross Profit</th>
+                            <th>Extra Costs</th>
+                            <th>Net Profit</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="salesBody">
-                        <tr><td colspan="9">Loading...</td></tr>
+                        <tr><td colspan="14">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -411,7 +448,7 @@
                         <div id="summaryTotalCost" class="metric-value">RWF 0</div>
                     </div>
                     <div class="metric">
-                        <div class="metric-label">Total Profit (Sold Items)</div>
+                        <div class="metric-label">Total Gross Profit (Sold Items)</div>
                         <div id="summaryTotalProfit" class="metric-value">RWF 0</div>
                     </div>
                     <div class="metric">
@@ -419,14 +456,18 @@
                         <div id="summarySoldUnits" class="metric-value">0</div>
                     </div>
                     <div class="metric">
-                        <div class="metric-label">Today's Profit (Sold Items)</div>
+                        <div class="metric-label">Today's Gross Profit (Sold Items)</div>
                         <div id="summaryTodayProfit" class="metric-value">RWF 0</div>
                     </div>
                 </div>
                 <div class="subactions" style="margin-top:10px;">
-                    <button id="recalcTodayProfitBtn" class="btn btn-primary" type="button">Recalculate Today's Sales Profit</button>
+                    <button id="recalcTodayProfitBtn" class="btn btn-primary" type="button">Recalculate Gross Profit</button>
                 </div>
-                <div class="helper-text">This action updates today's sales rows in the database to use: selling price minus cost price.</div>
+                <div class="helper-text">Gross Profit = (Units Sold × Selling Price per Unit) − (Units Sold × Cost per Unit).</div>
+                <details style="margin-top:10px;">
+                    <summary>Profit Debug Breakdown</summary>
+                    <pre id="profitDebugOutput" class="helper-text" style="white-space:pre-wrap;max-height:260px;overflow:auto;">No debug data yet.</pre>
+                </details>
             </div>
         </section>
     </div>
@@ -436,6 +477,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="./env.js"></script>
     <script src="./supabase-client.js"></script>
-    <script src="./admin.sales-upgrades.js?v=20260405v1"></script>
+    <script src="./admin.sales-upgrades.js?v=20260407v4"></script>
 </body>
 </html>
