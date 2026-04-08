@@ -46,396 +46,94 @@
         .status.error { color: var(--danger); }
         .status.warn { color: var(--warning); }
         .status.success { color: var(--success); }
+        .status-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+        .status-chip.taken { background: #fff4cc; color: #8a5a00; border: 1px solid #f0d884; }
+        .status-chip.paid { background: #e4f7eb; color: #1b7d4d; border: 1px solid #b8e2ca; }
+        .status-chip.returned { background: #fde7e7; color: #a12525; border: 1px solid #f2c2c2; }
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e7edf2; vertical-align: middle; }
         th { font-size: 0.84rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-        .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid #d9e2ea; background: #f7fafb; }
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .subactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 10px; }
-        .metric { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fbfdff; }
-        .metric-label { color: var(--muted); font-size: 0.86rem; margin-bottom: 6px; }
-        .metric-value { font-size: 1.15rem; font-weight: 700; }
-        .alert-list { margin: 0; padding: 0; list-style: none; color: #314658; }
-        .helper-text { margin-top: 8px; color: var(--muted); font-size: 0.88rem; }
-        .duplicate-panel { border: 1px solid #f3d5a3; background: #fffaf0; border-radius: 10px; padding: 14px; margin-top: 14px; display: none; }
-        .duplicate-panel.active { display: block; }
-        .duplicate-title { margin: 0 0 8px; font-weight: 700; color: #6f4d00; }
-        .notification-panel { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #fbfdff; margin-top: 14px; }
-        .notification-panel h3 { margin: 0 0 10px; }
-        .alert-item, .alert-history-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #fff; margin-top: 10px; }
-        .alert-card { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-        .alert-content { flex: 1; min-width: 0; }
-        .alert-head { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
-        .alert-message { font-weight: 600; line-height: 1.4; }
-        .alert-meta { margin-top: 6px; color: var(--muted); font-size: 0.86rem; line-height: 1.4; }
-        .alert-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .alert-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-        .alert-badge.info { background: #e7f2ff; color: #0b62a3; }
-        .alert-badge.warning { background: #fff3d6; color: #8a5a00; }
-        .alert-badge.critical { background: #fde7e7; color: #a12525; }
-        .alert-badge.status { background: #edf2f7; color: #45576b; }
-        .alert-action-btn { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: #eef4fa; color: #25435d; cursor: pointer; font-weight: 700; font-size: 0.84rem; }
-        .alert-action-btn:hover { background: #e2ecf6; }
-        .alert-action-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-        .alert-popups { position: fixed; top: 20px; right: 20px; left: auto; bottom: auto; width: min(420px, calc(100vw - 28px)); display: grid; justify-items: stretch; align-content: start; gap: 14px; padding: 0; z-index: 1200; background: transparent; backdrop-filter: none; overflow: visible; pointer-events: none; }
-        .alert-popups[hidden] { display: none; }
-        .alert-popup { position: relative; display: grid; gap: 12px; width: 100%; border: 1px solid rgba(25, 48, 72, 0.12); border-radius: 22px; background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,250,253,0.98)); box-shadow: 0 22px 48px rgba(16, 31, 45, 0.22); padding: 18px; overflow: hidden; animation: alert-popup-in 0.22s ease-out; pointer-events: auto; }
-        .alert-popup::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
-        .alert-popup::after { content: ""; position: absolute; top: -44px; right: -34px; width: 120px; height: 120px; border-radius: 50%; opacity: 0.08; }
-        .alert-popup.info::before { background: #0b62a3; }
-        .alert-popup.info::after { background: #0b62a3; }
-        .alert-popup.warning::before { background: #d18800; }
-        .alert-popup.warning::after { background: #d18800; }
-        .alert-popup.critical::before { background: #cf2e2e; }
-        .alert-popup.critical::after { background: #cf2e2e; }
-        .alert-popup-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: 1px solid rgba(37, 67, 93, 0.08); border-radius: 999px; background: rgba(238, 244, 250, 0.95); color: #25435d; cursor: pointer; font-size: 1rem; font-weight: 700; line-height: 1; transition: background 0.15s ease, transform 0.15s ease; }
-        .alert-popup-close:hover { background: #e2ecf6; transform: translateY(-1px); }
-        .alert-popup-top { display: flex; gap: 14px; align-items: flex-start; padding-right: 42px; }
-        .alert-popup-icon { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; flex: 0 0 auto; }
-        .alert-popup.info .alert-popup-icon { background: rgba(11, 98, 163, 0.12); color: #0b62a3; }
-        .alert-popup.warning .alert-popup-icon { background: rgba(209, 136, 0, 0.12); color: #8a5a00; }
-        .alert-popup.critical .alert-popup-icon { background: rgba(207, 46, 46, 0.12); color: #a12525; }
-        .alert-popup-copy { min-width: 0; flex: 1; }
-        .alert-popup-label { color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-        .alert-popup-title-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
-        .alert-popup-title { font-size: 1.04rem; font-weight: 800; color: #1e3246; }
-        .alert-popup-product { margin-top: 5px; font-size: 0.94rem; font-weight: 600; color: #314658; }
-        .alert-popup-body { border: 1px solid rgba(25, 48, 72, 0.08); border-radius: 16px; background: rgba(255, 255, 255, 0.86); padding: 13px; }
-        .alert-popup-message { font-weight: 600; line-height: 1.5; color: #21384c; }
-        .alert-popup-meta { margin-top: 8px; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
-        .alert-popup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .alert-popup-actions .alert-action-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 10px 12px; border-radius: 10px; font-size: 0.82rem; flex: 1 1 110px; transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; }
-        .alert-popup-actions .alert-action-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(31, 63, 92, 0.12); }
-        .alert-popup-actions .alert-action-btn[data-alert-action="acknowledge"] { background: #eef6ff; border-color: #cddff4; color: #0b62a3; }
-        .alert-popup-actions .alert-action-btn[data-alert-action="resolve"] { background: #edf9f3; border-color: #c8e8d7; color: #1b7d4d; }
-        .alert-popup-actions .alert-action-btn[data-popup-dismiss] { background: #f4f7fa; border-color: #d6dee6; color: #42576b; }
-        @keyframes alert-popup-in {
-            from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
-        .chart-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fff; min-height: 320px; }
-        .chart-card canvas { display: block; width: 100% !important; height: 250px !important; }
         .muted { color: var(--muted); font-size: 0.9rem; }
-        @media (max-width: 860px) {
-            .table-wrap { overflow-x: visible; }
-            table { min-width: 0; }
-            table thead {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                white-space: nowrap;
-                border: 0;
-            }
-            table,
-            table tbody,
-            table tr,
-            table td { display: block; width: 100%; }
-            table tr {
-                border: 1px solid #dce6ee;
-                border-radius: 12px;
-                background: #fff;
-                padding: 10px;
-                margin-bottom: 12px;
-                box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
-            }
-            table td {
-                border-bottom: 1px solid #eef3f7;
-                padding: 8px 0;
-            }
-            table td:last-child { border-bottom: none; padding-bottom: 0; }
-            table td::before {
-                content: attr(data-label);
-                display: block;
-                margin-bottom: 4px;
-                color: var(--muted);
-                font-size: 0.76rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
-            }
-            table td[colspan] {
-                text-align: center;
-                padding: 12px 0;
-                border-bottom: none;
-            }
-            table td[colspan]::before { display: none; }
-        }
-        @media (max-width: 700px) {
-            body { padding: 12px; }
-            h1 { font-size: 1.3rem; }
-            .topbar { flex-direction: column; align-items: stretch; }
-            .taskbar { top: 8px; padding: 8px; gap: 6px; }
-            .taskbar-link { flex: 1 1 calc(50% - 6px); min-height: 36px; text-align: center; }
-            .logout-btn { width: 100%; }
-            .card { padding: 12px; }
-            .form-grid,
-            .filter-grid,
-            .chart-grid { grid-template-columns: 1fr; }
-            .actions,
-            .subactions,
-            .alert-actions { flex-direction: column; }
-            .actions .btn,
-            .subactions .btn,
-            .alert-actions .alert-action-btn { width: 100%; }
-            .alert-card { flex-direction: column; }
-            .alert-popups { top: 12px; right: 12px; width: calc(100vw - 24px); }
-            .alert-popup { padding: 14px; }
-            .alert-popup-top { gap: 10px; }
-            .alert-popup-actions .alert-action-btn { flex-basis: 100%; }
-            .alert-popup-title { font-size: 0.96rem; }
-            .alert-popup-message { font-size: 0.88rem; line-height: 1.4; }
-            .alert-popup-meta { font-size: 0.76rem; }
-            .alert-popup-product { font-size: 0.84rem; }
-            .alert-action-btn { font-size: 0.78rem; padding: 7px 9px; }
-            .alert-badge { font-size: 0.68rem; padding: 3px 7px; }
-        }
-        @media (max-width: 480px) {
-            body { padding: 8px; }
-            .wrap { max-width: 100%; }
-            .taskbar-link { flex-basis: 100%; font-size: 0.8rem; }
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .thumb { width: 44px; height: 44px; }
-            .card { border-radius: 10px; padding: 10px; }
-            .btn { padding: 9px 10px; font-size: 0.85rem; }
-            input, select { padding: 9px; font-size: 0.9rem; }
-            th, td { padding: 8px; }
-            .alert-popups { top: 8px; right: 8px; width: calc(100vw - 16px); gap: 8px; }
-            .alert-popup { border-radius: 14px; padding: 11px; gap: 8px; }
+        /* Mobile toast mode: compact alerts for small screens (<= 768px). */
+        @media (max-width: 768px) {
+            .alert-popups { top: auto; right: 10px; bottom: 10px; width: calc(100vw - 20px); max-width: 360px; gap: 8px; }
+            .alert-popup { border-radius: 12px; padding: 10px 12px; gap: 6px; box-shadow: 0 10px 24px rgba(16, 31, 45, 0.22); }
+            .alert-popup::after { display: none; }
             .alert-popup-top { padding-right: 30px; gap: 8px; }
-            .alert-popup-icon { width: 38px; height: 38px; border-radius: 11px; font-size: 0.62rem; }
-            .alert-popup-close { width: 26px; height: 26px; top: 8px; right: 8px; font-size: 0.9rem; }
-            .alert-popup-title { font-size: 0.88rem; }
-            .alert-popup-body { border-radius: 10px; padding: 8px 9px; }
-            .alert-popup-message { font-size: 0.8rem; }
-            .alert-popup-meta { margin-top: 6px; font-size: 0.7rem; line-height: 1.35; }
-            .alert-popup-actions { gap: 6px; }
-            .alert-popup-actions .alert-action-btn { min-height: 34px; padding: 8px 9px; font-size: 0.74rem; border-radius: 8px; }
-            .alert-item, .alert-history-item { padding: 9px; border-radius: 8px; margin-top: 8px; }
-            .alert-message { font-size: 0.88rem; line-height: 1.35; }
-            .alert-meta { font-size: 0.74rem; margin-top: 4px; }
+            .alert-popup-icon { width: 34px; height: 34px; border-radius: 10px; font-size: 0.62rem; }
+            .alert-popup-title { font-size: 0.86rem; }
+            .alert-popup-product { margin-top: 2px; font-size: 0.78rem; }
+            .alert-popup-body { border-radius: 10px; padding: 8px; }
+            .alert-popup-message { font-size: 0.78rem; line-height: 1.3; }
+            .alert-popup-meta { margin-top: 5px; font-size: 0.68rem; line-height: 1.25; }
+            .alert-popup-actions { display: none; }
+            .alert-popup-close { width: 24px; height: 24px; top: 7px; right: 7px; font-size: 0.88rem; }
         }
     </style>
 </head>
 <body>
-    <div class="wrap">
-        <div class="topbar">
-            <div>
-                <h1>Admin Dashboard</h1>
-                <div id="sessionInfo" class="session-info">Checking session...</div>
-            </div>
-            <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+<div class="wrap">
+    <div class="topbar">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <div id="sessionInfo" class="session-info">Checking session...</div>
         </div>
-        <nav class="taskbar" aria-label="Quick admin navigation">
-            <a class="taskbar-link" href="#inventorySection">Inventory</a>
-            <a class="taskbar-link" href="#salesDashboardSection">Sales Dashboard</a>
-            <a class="taskbar-link" href="#smartAlertsSection">Smart Alerts</a>
-            <a class="taskbar-link" href="#salesReportSection">Sales Report</a>
-        </nav>
-
-        <section class="card">
-            <h2>Upload Product / Add Stock</h2>
-            <p class="muted">Duplicate products are detected by product name or product ID before any insert happens.</p>
-            <form id="productForm">
-                <input id="productId" type="hidden">
-                <div class="form-grid">
-                    <div>
-                        <label for="name">Product Name</label>
-                        <input id="name" type="text" required>
-                    </div>
-                    <div>
-                        <label for="productQuantity">Product Quantity</label>
-                        <input id="productQuantity" type="number" min="1" step="1" required>
-                    </div>
-                    <div>
-                        <label for="unitsPerBox">Units Per Box (Optional)</label>
-                        <input id="unitsPerBox" type="number" min="1" step="1">
-                    </div>
-                    <div>
-                        <label for="pricePerUnit">Price Per Unit (RWF)</label>
-                        <input id="pricePerUnit" type="number" min="0" step="1" required>
-                    </div>
-                    <div>
-                        <label for="pricePerBox">Price Per Box (Optional)</label>
-                        <input id="pricePerBox" type="number" min="0" step="1">
-                        <small class="muted">If left empty and units per box is set, box price is calculated from unit price.</small>
-                    </div>
-                    <div>
-                        <label for="purchasePrice">Purchase Price For Added Stock (RWF)</label>
-                        <input id="purchasePrice" type="number" min="0" step="1" required>
-                    </div>
-                    <div>
-                        <label for="image">Image (choose file)</label>
-                        <input id="image" type="file" accept="image/*">
-                    </div>
-                    <div>
-                        <button id="submitBtn" class="btn btn-primary" type="submit">Save Product</button>
-                    </div>
-                </div>
-            </form>
-            <div id="duplicatePanel" class="duplicate-panel">
-                <p class="duplicate-title">This product already exists. Choose an action:</p>
-                <div id="duplicateSummary" class="muted"></div>
-                <div class="subactions">
-                    <button id="duplicateAddStockBtn" class="btn btn-success" type="button">Add stock</button>
-                    <button id="duplicateEditPriceBtn" class="btn btn-primary" type="button">Edit selling price</button>
-                    <button id="duplicateCancelBtn" class="btn btn-danger" type="button">Cancel</button>
-                </div>
-                <div class="helper-text">Adding stock requires additional quantity and purchase price. Editing selling price updates pricing only and creates an audit log entry.</div>
-            </div>
-            <div id="formStatus" class="status"></div>
-        </section>
-
-        <section id="inventorySection" class="card">
-            <h2 id="inventoryTitle">Inventory</h2>
-            <p class="muted">Live updates enabled via Supabase Realtime.</p>
-            <div class="filter-grid" style="margin: 10px 0 6px;">
-                <div>
-                    <label for="inventorySearch">Search Inventory</label>
-                    <input id="inventorySearch" type="search" placeholder="Search by name, ID, status, or alert text">
-                </div>
-                <div>
-                    <button id="clearInventorySearchBtn" class="btn btn-danger" type="button">Clear Search</button>
-                </div>
-            </div>
-            <div id="inventorySearchStatus" class="muted"></div>
-            <div id="inventoryStatus" class="status">Loading inventory...</div>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Qty</th>
-                            <th>Unit/Box</th>
-                            <th>Pricing</th>
-                            <th>Cost Pool</th>
-                            <th>Status</th>
-                            <th>Alerts</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventoryBody">
-                        <tr><td colspan="9">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="salesDashboardSection" class="card">
-            <h2>Sales Dashboard</h2>
-            <div id="salesStatus" class="status">Loading sales...</div>
-            <div class="dashboard-grid">
-                <div class="metric"><div class="metric-label">Total Revenue</div><div id="metricTotalRevenue" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Total Cost</div><div id="metricTotalCost" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Total Profit</div><div id="metricTotalProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Daily Profit</div><div id="metricDailyProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Today's Sold Profit</div><div id="metricTodaySoldProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Monthly Profit</div><div id="metricMonthlyProfit" class="metric-value">RWF 0</div></div>
-                <div class="metric"><div class="metric-label">Total Sold Items</div><div id="metricSoldItems" class="metric-value">0</div></div>
-            </div>
-            <h3 id="smartAlertsSection">Smart Alerts</h3>
-            <div id="alertsStatus" class="status">Loading alerts...</div>
-            <ul id="smartAlerts" class="alert-list">
-                <li>No alerts right now.</li>
-            </ul>
-            <div class="notification-panel">
-                <h3>Notification Panel</h3>
-                <ul id="notificationList" class="alert-list">
-                    <li>No notifications right now.</li>
-                </ul>
-            </div>
-            <div class="notification-panel">
-                <h3>Recent Alert Activity</h3>
-                <ul id="alertHistoryList" class="alert-list">
-                    <li>No alert activity right now.</li>
-                </ul>
-            </div>
-            <div class="chart-grid">
-                <div class="chart-card">
-                    <h3>Daily Revenue</h3>
-                    <canvas id="dailyRevenueChart" height="120"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Top 5 Products</h3>
-                    <canvas id="topProductsChart" height="120"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <section id="salesReportSection" class="card">
-            <h2>Sales Report</h2>
-            <div class="filter-grid">
-                <div><label for="filterFrom">From</label><input id="filterFrom" type="date"></div>
-                <div><label for="filterTo">To</label><input id="filterTo" type="date"></div>
-                <div><label for="filterProduct">Product Name</label><input id="filterProduct" type="text" placeholder="Optional"></div>
-                <div><label for="filterSaleType">Sale Type</label><select id="filterSaleType"><option value="">All</option><option value="unit">Unit</option><option value="box">Box</option></select></div>
-                <div><button id="exportCsvBtn" class="btn btn-primary" type="button">Export Sales CSV</button></div>
-                <div><button id="resetFiltersBtn" class="btn btn-danger" type="button" onclick="window.resetSalesFilters && window.resetSalesFilters(event)">Reset Filters</button></div>
-            </div>
-            <div class="table-wrap" style="margin-top:12px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Entry Type</th>
-                            <th>Product</th>
-                            <th>Details</th>
-                            <th>Qty</th>
-                            <th>Revenue</th>
-                            <th>Cost</th>
-                            <th>Profit</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="salesBody">
-                        <tr><td colspan="9">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="notification-panel" style="margin-top:12px;">
-                <h3>Sales Summary (Filtered)</h3>
-                <div class="dashboard-grid">
-                    <div class="metric">
-                        <div class="metric-label">Total Revenue (Sold Items)</div>
-                        <div id="summaryTotalRevenue" class="metric-value">RWF 0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Total Cost (Sold Items)</div>
-                        <div id="summaryTotalCost" class="metric-value">RWF 0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Total Profit (Sold Items)</div>
-                        <div id="summaryTotalProfit" class="metric-value">RWF 0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Total Sold Units (Filtered)</div>
-                        <div id="summarySoldUnits" class="metric-value">0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-label">Today's Profit (Sold Items)</div>
-                        <div id="summaryTodayProfit" class="metric-value">RWF 0</div>
-                    </div>
-                </div>
-                <div class="subactions" style="margin-top:10px;">
-                    <button id="recalcTodayProfitBtn" class="btn btn-primary" type="button">Recalculate Today's Sales Profit</button>
-                </div>
-                <div class="helper-text">This action updates today's sales rows in the database to use: selling price minus cost price.</div>
-            </div>
-        </section>
+        <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
     </div>
-    <div id="alertPopupStack" class="alert-popups" aria-live="polite" aria-label="Smart alert popups" hidden></div>
+    <nav class="taskbar" aria-label="Quick admin navigation">
+        <a class="taskbar-link" href="#inventorySection">Inventory</a>
+        <a class="taskbar-link" href="#salesDashboardSection">Sales Dashboard</a>
+        <a class="taskbar-link" href="#smartAlertsSection">Smart Alerts</a>
+        <a class="taskbar-link" href="#salesReportSection">Sales Report</a>
+        <a class="taskbar-link" href="unpaid.html">Unpaid / Rent Items</a>
+    </nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="./env.js"></script>
-    <script src="./supabase-client.js"></script>
-    <script src="./admin.sales-upgrades.js?v=20260405v1"></script>
+    <section id="salesDashboardSection" class="card">
+        <h2>Sales Dashboard</h2>
+        <div class="dashboard-grid">
+            <div class="metric"><div class="metric-label">Total Revenue</div><div id="metricTotalRevenue" class="metric-value">RWF 0</div></div>
+            <div class="metric"><div class="metric-label">Total Cost</div><div id="metricTotalCost" class="metric-value">RWF 0</div></div>
+            <div class="metric"><div class="metric-label">Total Gross Profit</div><div id="metricTotalProfit" class="metric-value">RWF 0</div></div>
+            <div class="metric"><div class="metric-label">Daily Gross Profit</div><div id="metricDailyProfit" class="metric-value">RWF 0</div></div>
+            <div class="metric"><div class="metric-label">Today's Sold Gross Profit</div><div id="metricTodaySoldProfit" class="metric-value">RWF 0</div></div>
+            <div class="metric"><div class="metric-label">Monthly Gross Profit</div><div id="metricMonthlyProfit" class="metric-value">RWF 0</div></div>
+            <div class="metric"><div class="metric-label">Total Sold Items</div><div id="metricSoldItems" class="metric-value">0</div></div>
+        </div>
+    </section>
+
+    <section id="salesReportSection" class="card">
+        <h2>Sales Report</h2>
+        <div class="table-wrap" style="margin-top:12px;">
+            <table>
+                <thead>
+                <tr>
+                    <th>Date</th><th>Entry Type</th><th>Product</th><th>Details</th><th>Qty</th><th>Units Sold</th><th>Selling Price / Unit</th><th>Cost / Unit</th><th>Revenue</th><th>Cost</th><th>Gross Profit</th><th>Extra Costs</th><th>Net Profit</th><th>Status</th>
+                </tr>
+                </thead>
+                <tbody id="salesBody"><tr><td colspan="14">Loading...</td></tr></tbody>
+            </table>
+        </div>
+        <div class="notification-panel" style="margin-top:12px;">
+            <h3>Sales Summary (Filtered)</h3>
+            <div class="dashboard-grid">
+                <div class="metric"><div class="metric-label">Total Revenue (Sold Items)</div><div id="summaryTotalRevenue" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Total Cost (Sold Items)</div><div id="summaryTotalCost" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Total Gross Profit (Sold Items)</div><div id="summaryTotalProfit" class="metric-value">RWF 0</div></div>
+                <div class="metric"><div class="metric-label">Total Sold Units (Filtered)</div><div id="summarySoldUnits" class="metric-value">0</div></div>
+                <div class="metric"><div class="metric-label">Today's Gross Profit (Sold Items)</div><div id="summaryTodayProfit" class="metric-value">RWF 0</div></div>
+            </div>
+            <div class="subactions" style="margin-top:10px;"><button id="recalcTodayProfitBtn" class="btn btn-primary" type="button">Recalculate Gross Profit</button></div>
+            <div class="helper-text">Gross Profit = (Units Sold × Selling Price per Unit) − (Units Sold × Cost per Unit).</div>
+            <details style="margin-top:10px;"><summary>Profit Debug Breakdown</summary><pre id="profitDebugOutput" class="helper-text" style="white-space:pre-wrap;max-height:260px;overflow:auto;">No debug data yet.</pre></details>
+        </div>
+    </section>
+</div>
+<div id="alertPopupStack" class="alert-popups" aria-live="polite" aria-label="Smart alert popups" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="./env.js"></script>
+<script src="./supabase-client.js"></script>
+<script src="./admin.sales-upgrades.js?v=20260407v4"></script>
 </body>
 </html>
