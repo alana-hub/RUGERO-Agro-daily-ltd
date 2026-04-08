@@ -38,6 +38,7 @@
     const summarySoldUnits = document.getElementById("summarySoldUnits");
     const summaryTodayProfit = document.getElementById("summaryTodayProfit");
     const recalcTodayProfitBtn = document.getElementById("recalcTodayProfitBtn");
+    const profitDebugOutput = document.getElementById("profitDebugOutput");
     const alertsStatus = document.getElementById("alertsStatus");
     const smartAlerts = document.getElementById("smartAlerts");
     const exportCsvBtn = document.getElementById("exportCsvBtn");
@@ -54,6 +55,17 @@
     const notificationList = document.getElementById("notificationList");
     const alertHistoryList = document.getElementById("alertHistoryList");
     const alertPopupStack = document.getElementById("alertPopupStack");
+    const unpaidItemForm = document.getElementById("unpaidItemForm");
+    const unpaidProductNameInput = document.getElementById("unpaidProductName");
+    const unpaidUnitsInput = document.getElementById("unpaidUnits");
+    const unpaidSellingUnitInput = document.getElementById("unpaidSellingUnit");
+    const unpaidCostUnitInput = document.getElementById("unpaidCostUnit");
+    const unpaidStatusInput = document.getElementById("unpaidStatus");
+    const unpaidItemsStatus = document.getElementById("unpaidItemsStatus");
+    const unpaidItemsBody = document.getElementById("unpaidItemsBody");
+    const unpaidTakenCount = document.getElementById("unpaidTakenCount");
+    const unpaidPaidCount = document.getElementById("unpaidPaidCount");
+    const unpaidReturnedCount = document.getElementById("unpaidReturnedCount");
 
     const metricTotalRevenue = document.getElementById("metricTotalRevenue");
     const metricTotalCost = document.getElementById("metricTotalCost");
@@ -72,6 +84,7 @@
     let inventorySearchTerm = "";
     let salesReportRows = [];
     let pendingDuplicateProduct = null;
+    let unpaidItems = [];
     let persistedAlerts = [];
     let recentAlertEvents = [];
     let alertsBackedByDb = false;
@@ -79,6 +92,7 @@
     let activePopupAlerts = [];
     const dismissedAlertPopups = new Set();
     const vibratedAlertPopups = new Set();
+    const popupAutoDismissTimers = new Map();
     const markSoldInFlight = new Set();
     const REPORTING_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
     const REPORTING_DATE_PARTS_FORMATTER = new Intl.DateTimeFormat("en-US", {
@@ -87,6 +101,7 @@
         month: "2-digit",
         day: "2-digit"
     });
+    const UNPAID_ITEMS_STORAGE_KEY = "rugero_admin_unpaid_items_v1";
 
     function formatRwf(value) {
         return new Intl.NumberFormat("en-RW", {
@@ -133,6 +148,122 @@
 
     function roundMoney(value) {
         return Math.round(toNumber(value, 0) * 100) / 100;
+    }
+
+    function safeStorageGet(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (error) {
+            console.warn("Storage read failed", error);
+            return null;
+        }
+    }
+
+    function safeStorageSet(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (error) {
+            console.warn("Storage write failed", error);
+        }
+    }
+
+    function loadUnpaidItems() {
+        const raw = safeStorageGet(UNPAID_ITEMS_STORAGE_KEY);
+        if (!raw) return [];
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.warn("Failed to parse unpaid items", error);
+            return [];
+        }
+    }
+
+    function saveUnpaidItems() {
+        safeStorageSet(UNPAID_ITEMS_STORAGE_KEY, JSON.stringify(unpaidItems));
+    }
+
+    function unpaidStatusClass(status) {
+        const normalized = String(status || "").toLowerCase();
+        if (normalized === "paid" || normalized === "returned") return normalized;
+        return "taken";
+    }
+
+    function createUnpaidItemPayload() {
+        return {
+            id: `unpaid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            created_at: new Date().toISOString(),
+            product_name: sanitizeProductName(unpaidProductNameInput?.value),
+            units: Math.max(1, Math.floor(toNumber(unpaidUnitsInput?.value, 1))),
+            selling_price_per_unit: roundMoney(toNumber(unpaidSellingUnitInput?.value, 0)),
+            cost_price_per_unit: roundMoney(toNumber(unpaidCostUnitInput?.value, 0)),
+            status: unpaidStatusClass(unpaidStatusInput?.value),
+            paid_at: null,
+            returned_at: null
+        };
+    }
+
+    function unpaidItemToSaleEntry(item) {
+        const unitsSold = Math.max(1, toNumber(item.units, 1));
+        const sellingPricePerUnit = roundMoney(toNumber(item.selling_price_per_unit, 0));
+        const costPerUnit = roundMoney(toNumber(item.cost_price_per_unit, 0));
+        const revenue = roundMoney(unitsSold * sellingPricePerUnit);
+        const cost = roundMoney(unitsSold * costPerUnit);
+        const grossProfit = roundMoney(revenue - cost);
+        return {
+            kind: "sale",
+            date: item.paid_at || item.created_at || new Date().toISOString(),
+            product: item.product_name || "Unnamed",
+            details: "unit",
+            quantity: unitsSold,
+            unitsSold,
+            sellingPricePerUnit,
+            costPerUnit,
+            revenue,
+            cost,
+            profit: grossProfit,
+            grossProfit,
+            extraCosts: 0,
+            netProfit: grossProfit,
+            extraCostBreakdown: { shipping: 0, packaging: 0, taxes: 0, paymentFees: 0, discounts: 0, refunds: 0, other: 0, total: 0 },
+            status: "completed",
+            raw: { ...item, unpaid_item_id: item.id, source: "unpaid_items" }
+        };
+    }
+
+    function buildPaidEntriesFromUnpaidItems() {
+        return unpaidItems
+            .filter((item) => unpaidStatusClass(item.status) === "paid")
+            .map(unpaidItemToSaleEntry);
+    }
+
+    function renderUnpaidItems() {
+        if (!unpaidItemsBody) return;
+        if (!unpaidItems.length) {
+            unpaidItemsBody.innerHTML = '<tr><td colspan="7">No unpaid/rent items yet.</td></tr>';
+        } else {
+            unpaidItemsBody.innerHTML = unpaidItems.map((item) => `
+                <tr data-unpaid-id="${escapeHtml(item.id)}">
+                    <td data-label="Date">${escapeHtml(formatDateTime(item.created_at))}</td>
+                    <td data-label="Product">${escapeHtml(item.product_name)}</td>
+                    <td data-label="Units">${Math.max(1, toNumber(item.units, 1))}</td>
+                    <td data-label="Selling / Unit">${formatRwf(item.selling_price_per_unit)}</td>
+                    <td data-label="Cost / Unit">${formatRwf(item.cost_price_per_unit)}</td>
+                    <td data-label="Status"><span class="status-chip ${escapeHtml(unpaidStatusClass(item.status))}">${escapeHtml(unpaidStatusClass(item.status))}</span></td>
+                    <td data-label="Actions" class="actions">
+                        <button class="btn btn-success" type="button" data-unpaid-action="paid" data-unpaid-id="${escapeHtml(item.id)}" ${unpaidStatusClass(item.status) === "paid" ? "disabled" : ""}>Mark as Paid</button>
+                        <button class="btn btn-danger" type="button" data-unpaid-action="returned" data-unpaid-id="${escapeHtml(item.id)}" ${unpaidStatusClass(item.status) === "returned" ? "disabled" : ""}>Mark as Returned</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        const taken = unpaidItems.filter((item) => unpaidStatusClass(item.status) === "taken").length;
+        const paid = unpaidItems.filter((item) => unpaidStatusClass(item.status) === "paid").length;
+        const returned = unpaidItems.filter((item) => unpaidStatusClass(item.status) === "returned").length;
+        if (unpaidTakenCount) unpaidTakenCount.textContent = String(taken);
+        if (unpaidPaidCount) unpaidPaidCount.textContent = String(paid);
+        if (unpaidReturnedCount) unpaidReturnedCount.textContent = String(returned);
     }
 
     function isImageFile(file) {
@@ -440,6 +571,8 @@
             .slice(0, popupLimit);
 
         if (!visibleAlerts.length) {
+            for (const timer of popupAutoDismissTimers.values()) clearTimeout(timer);
+            popupAutoDismissTimers.clear();
             alertPopupStack.innerHTML = "";
             alertPopupStack.hidden = true;
             return;
@@ -488,6 +621,27 @@
                 </section>
             `;
         }).join("");
+
+        // Mobile toast behavior (<= 768px): auto-dismiss popups after ~2.6 seconds.
+        const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+        const visibleKeys = new Set(visibleAlerts.map((alert) => popupAlertKey(alert)));
+        for (const [popupKey, timer] of popupAutoDismissTimers.entries()) {
+            if (!visibleKeys.has(popupKey) || !isMobileViewport) {
+                clearTimeout(timer);
+                popupAutoDismissTimers.delete(popupKey);
+            }
+        }
+        if (isMobileViewport) {
+            for (const alert of visibleAlerts) {
+                const popupKey = popupAlertKey(alert);
+                if (popupAutoDismissTimers.has(popupKey)) continue;
+                const timer = setTimeout(() => {
+                    popupAutoDismissTimers.delete(popupKey);
+                    dismissAlertPopup(popupKey);
+                }, 2600);
+                popupAutoDismissTimers.set(popupKey, timer);
+            }
+        }
     }
 
     function sortAlertsForDisplay(rows) {
@@ -1445,14 +1599,68 @@
         return row.changed_at || row.created_at || new Date().toISOString();
     }
 
+    function saleUnitsSold(row) {
+        return Math.max(1, toNumber(row.units_sold, toNumber(row.quantity, 1)));
+    }
+
+    function saleSellingPricePerUnit(row) {
+        const units = saleUnitsSold(row);
+        if (Number.isFinite(Number(row.selling_price))) return Number(row.selling_price) / units;
+        if (Number.isFinite(Number(row.total_price))) return Number(row.total_price) / units;
+        return toNumber(row.price_rwf, 0);
+    }
+
+    function saleCostPerUnit(row) {
+        const units = saleUnitsSold(row);
+        if (Number.isFinite(Number(row.cost_price))) return Number(row.cost_price) / units;
+        if (Number.isFinite(Number(row.unit_cost))) return Number(row.unit_cost);
+        if (Number.isFinite(Number(row.cost_per_unit))) return Number(row.cost_per_unit);
+        return 0;
+    }
+
     function saleRevenue(row) {
-        if (Number.isFinite(Number(row.selling_price))) return Number(row.selling_price);
-        if (Number.isFinite(Number(row.total_price))) return Number(row.total_price);
-        return (toNumber(row.price_rwf, 0) * Math.max(1, toNumber(row.quantity, 1)));
+        return roundMoney(saleUnitsSold(row) * saleSellingPricePerUnit(row));
     }
 
     function saleCost(row) {
-        return toNumber(row.cost_price, 0);
+        return roundMoney(saleUnitsSold(row) * saleCostPerUnit(row));
+    }
+
+    function readNumericField(row, keys) {
+        for (const key of keys) {
+            const value = Number(row?.[key]);
+            if (Number.isFinite(value)) return value;
+        }
+        return 0;
+    }
+
+    function saleExtraCostBreakdown(row) {
+        const shipping = readNumericField(row, ["shipping_cost", "delivery_cost"]);
+        const packaging = readNumericField(row, ["packaging_cost", "packing_cost"]);
+        const taxes = readNumericField(row, ["tax_amount", "vat_amount", "sales_tax"]);
+        const paymentFees = readNumericField(row, ["payment_fee", "transaction_fee", "platform_fee"]);
+        const discounts = readNumericField(row, ["discount_amount", "coupon_amount", "price_adjustment"]);
+        const refunds = readNumericField(row, ["refund_amount", "returned_amount", "return_value"]);
+        const other = readNumericField(row, ["other_cost", "misc_cost"]);
+        return {
+            shipping,
+            packaging,
+            taxes,
+            paymentFees,
+            discounts,
+            refunds,
+            other,
+            total: roundMoney(shipping + packaging + taxes + paymentFees + discounts + refunds + other)
+        };
+    }
+
+    function saleDebugBreakdown(row) {
+        const revenue = saleRevenue(row);
+        const cogs = saleCost(row);
+        const grossProfit = roundMoney(revenue - cogs);
+        const extras = saleExtraCostBreakdown(row);
+        const netProfit = roundMoney(grossProfit - extras.total);
+        return { revenue, cogs, grossProfit, netProfit, extras };
     }
 
     function saleProfit(row) {
@@ -1461,7 +1669,7 @@
         return saleRevenue(row) - saleCost(row);
     }
 
-    function profitFromSaleAmounts(row) {
+    function grossProfitFromSaleAmounts(row) {
         return roundMoney(toNumber(row.revenue, 0) - toNumber(row.cost, 0));
     }
 
@@ -1488,18 +1696,28 @@
     }
 
     function createReportEntries(salesRows, priceRows) {
-        const saleEntries = salesRows.map((row) => ({
-            kind: "sale",
-            date: saleDate(row),
-            product: saleProductName(row),
-            details: saleType(row),
-            quantity: Math.max(1, toNumber(row.quantity, 1)),
-            revenue: saleRevenue(row),
-            cost: saleCost(row),
-            profit: roundMoney(saleRevenue(row) - saleCost(row)),
-            status: saleStatus(row),
-            raw: row
-        }));
+        const saleEntries = salesRows.map((row) => {
+            const breakdown = saleDebugBreakdown(row);
+            return {
+                kind: "sale",
+                date: saleDate(row),
+                product: saleProductName(row),
+                details: saleType(row),
+                quantity: Math.max(1, toNumber(row.quantity, 1)),
+                unitsSold: saleUnitsSold(row),
+                sellingPricePerUnit: roundMoney(saleSellingPricePerUnit(row)),
+                costPerUnit: roundMoney(saleCostPerUnit(row)),
+                revenue: breakdown.revenue,
+                cost: breakdown.cogs,
+                profit: breakdown.grossProfit,
+                grossProfit: breakdown.grossProfit,
+                extraCosts: breakdown.extras.total,
+                netProfit: breakdown.netProfit,
+                extraCostBreakdown: breakdown.extras,
+                status: saleStatus(row),
+                raw: row
+            };
+        });
 
         const priceEntries = priceRows.map((row) => ({
             kind: "price_update",
@@ -1533,7 +1751,7 @@
 
     function renderSales(rows) {
         if (!rows.length) {
-            salesBody.innerHTML = '<tr><td colspan="9">No sales records found.</td></tr>';
+            salesBody.innerHTML = '<tr><td colspan="14">No sales records found.</td></tr>';
             return;
         }
 
@@ -1546,28 +1764,119 @@
                     <td data-label="Product">${escapeHtml(row.product)}</td>
                     <td data-label="Details">${escapeHtml(row.details)}</td>
                     <td data-label="Qty">-</td>
+                    <td data-label="Units Sold">-</td>
+                    <td data-label="Selling Price / Unit">-</td>
+                    <td data-label="Cost / Unit">-</td>
                     <td data-label="Revenue">-</td>
                     <td data-label="Cost">-</td>
-                    <td data-label="Profit">-</td>
+                    <td data-label="Gross Profit">-</td>
+                    <td data-label="Extra Costs">-</td>
+                    <td data-label="Net Profit">-</td>
                     <td data-label="Status">${escapeHtml(row.status)}</td>
                 </tr>
             `;
             }
 
             return `
-                <tr>
+                <tr data-entry-kind="sale" data-date="${escapeHtml(toCalendarDateKey(row.date))}">
                     <td data-label="Date">${escapeHtml(formatDateTime(row.date))}</td>
                     <td data-label="Entry Type">Sale</td>
                     <td data-label="Product">${escapeHtml(row.product)}</td>
                     <td data-label="Details">${escapeHtml(row.details)}</td>
                     <td data-label="Qty">${row.quantity}</td>
+                    <td data-label="Units Sold">${row.unitsSold}</td>
+                    <td data-label="Selling Price / Unit">${formatRwf(row.sellingPricePerUnit)}</td>
+                    <td data-label="Cost / Unit">${formatRwf(row.costPerUnit)}</td>
                     <td data-label="Revenue">${formatRwf(row.revenue)}</td>
                     <td data-label="Cost">${formatRwf(row.cost)}</td>
-                    <td data-label="Profit">${formatRwf(row.profit)}</td>
+                    <td data-label="Gross Profit" class="gross-profit-cell" data-units-sold="${row.unitsSold}" data-sell-unit="${row.sellingPricePerUnit}" data-cost-unit="${row.costPerUnit}">${formatRwf(row.grossProfit)}</td>
+                    <td data-label="Extra Costs">${formatRwf(row.extraCosts)}</td>
+                    <td data-label="Net Profit">${formatRwf(row.netProfit)}</td>
                     <td data-label="Status">${escapeHtml(row.status)}</td>
                 </tr>
             `;
         }).join("");
+    }
+
+    function readRowValue(rowEl, label, fallback = 0) {
+        const cell = rowEl.querySelector(`td[data-label="${label}"]`);
+        if (!cell) return fallback;
+        const input = cell.querySelector("input, select, textarea");
+        if (input) {
+            const inputVal = Number(input.value);
+            if (Number.isFinite(inputVal)) return inputVal;
+        }
+        const parsed = Number(String(cell.textContent || "").replace(/[^\d.-]/g, ""));
+        return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function renderProfitDebug(rows) {
+        const saleRows = rows.filter((row) => row.kind === "sale");
+        if (!saleRows.length) {
+            if (profitDebugOutput) profitDebugOutput.textContent = "No sale rows available for debug.";
+            return;
+        }
+
+        const lines = [];
+        for (const row of saleRows) {
+            const b = row.extraCostBreakdown || saleExtraCostBreakdown(row.raw || row);
+            lines.push(
+                `${row.product} | revenue=${formatRwf(row.revenue)} | cogs=${formatRwf(row.cost)} | extras=${formatRwf(row.extraCosts || 0)} ` +
+                `(shipping=${formatRwf(b.shipping)}, packaging=${formatRwf(b.packaging)}, taxes=${formatRwf(b.taxes)}, paymentFees=${formatRwf(b.paymentFees)}, discounts=${formatRwf(b.discounts)}, refunds=${formatRwf(b.refunds)}, other=${formatRwf(b.other)}) | ` +
+                `gross=${formatRwf(row.grossProfit)} | net=${formatRwf(row.netProfit)} | status=${row.status}`
+            );
+        }
+
+        if (profitDebugOutput) {
+            profitDebugOutput.textContent = lines.join("\n");
+        }
+        console.groupCollapsed("Profit debug breakdown");
+        console.table(saleRows.map((row) => ({
+            product: row.product,
+            status: row.status,
+            revenue: row.revenue,
+            cogs: row.cost,
+            extraCosts: row.extraCosts || 0,
+            grossProfit: row.grossProfit,
+            netProfit: row.netProfit
+        })));
+        console.groupEnd();
+    }
+
+    function recalculateGrossProfitFromVisibleRows() {
+        if (!salesBody) return;
+        let totalGrossProfit = 0;
+        let todayGrossProfit = 0;
+        const dayKey = todayDateKey();
+        const rowEls = salesBody.querySelectorAll('tr[data-entry-kind="sale"]');
+        for (const rowEl of rowEls) {
+            const grossCell = rowEl.querySelector(".gross-profit-cell");
+            if (!grossCell) continue;
+            const status = String(rowEl.querySelector('td[data-label="Status"]')?.textContent || "").toLowerCase().trim();
+            const units = Math.max(1, readRowValue(rowEl, "Units Sold", toNumber(grossCell.dataset.unitsSold, 1)));
+            const sellUnit = readRowValue(rowEl, "Selling Price / Unit", toNumber(grossCell.dataset.sellUnit, 0));
+            const costUnit = readRowValue(rowEl, "Cost / Unit", toNumber(grossCell.dataset.costUnit, 0));
+            const extraCosts = readRowValue(rowEl, "Extra Costs", 0);
+            const revenue = roundMoney(units * sellUnit);
+            const cogs = roundMoney(units * costUnit);
+            const grossProfit = roundMoney((units * sellUnit) - (units * costUnit));
+            const netProfit = roundMoney(grossProfit - extraCosts);
+            const revenueCell = rowEl.querySelector('td[data-label="Revenue"]');
+            const costCell = rowEl.querySelector('td[data-label="Cost"]');
+            const netCell = rowEl.querySelector('td[data-label="Net Profit"]');
+            if (revenueCell) revenueCell.textContent = formatRwf(revenue);
+            if (costCell) costCell.textContent = formatRwf(cogs);
+            grossCell.textContent = formatRwf(grossProfit);
+            if (netCell) netCell.textContent = formatRwf(netProfit);
+            const excluded = status === "returned" || status === "cancelled" || status === "void";
+            if (!excluded) {
+                totalGrossProfit += grossProfit;
+                if (rowEl.dataset.date === dayKey) todayGrossProfit += grossProfit;
+            }
+        }
+
+        if (summaryTotalProfit) summaryTotalProfit.textContent = formatRwf(roundMoney(totalGrossProfit));
+        if (summaryTodayProfit) summaryTodayProfit.textContent = formatRwf(roundMoney(todayGrossProfit));
     }
 
     function renderSalesSummary(rows) {
@@ -1584,7 +1893,7 @@
             if (status === "returned" || status === "cancelled" || status === "void") continue;
             totalRevenue += toNumber(row.revenue, 0);
             totalCost += toNumber(row.cost, 0);
-            const saleProfit = profitFromSaleAmounts(row);
+            const saleProfit = grossProfitFromSaleAmounts(row);
             totalProfit += saleProfit;
             soldUnits += Math.max(1, toNumber(row.raw?.units_sold, toNumber(row.quantity, 1)));
             if (toCalendarDateKey(row.date) === dayKey) {
@@ -1602,11 +1911,14 @@
     function renderMetrics(rows) {
         let totalRevenue = 0;
         let totalCost = 0;
-        let totalProfit = 0;
+        let totalGrossProfit = 0;
         let soldItems = 0;
-        let dailyProfit = 0;
-        let todaySoldProfit = 0;
-        let monthlyProfit = 0;
+        let dailyRevenue = 0;
+        let dailyCost = 0;
+        let todaySoldRevenue = 0;
+        let todaySoldCost = 0;
+        let monthlyRevenue = 0;
+        let monthlyCost = 0;
         const day = todayDateKey();
         const month = monthDateKey();
 
@@ -1617,26 +1929,34 @@
             const soldStatus = status === "completed" || status === "sold";
             const rev = toNumber(row.revenue, 0);
             const cost = toNumber(row.cost, 0);
-            const profit = profitFromSaleAmounts(row);
             const qty = Math.max(1, toNumber(row.raw?.units_sold, toNumber(row.quantity, 1)));
             const dateKey = toCalendarDateKey(row.date);
             const monthKey = toCalendarMonthKey(row.date);
 
             totalRevenue += rev;
             totalCost += cost;
-            totalProfit += profit;
+            totalGrossProfit += (rev - cost);
             soldItems += qty;
-            if (dateKey === day) dailyProfit += profit;
-            if (dateKey === day && soldStatus) todaySoldProfit += profit;
-            if (monthKey === month) monthlyProfit += profit;
+            if (dateKey === day) {
+                dailyRevenue += rev;
+                dailyCost += cost;
+            }
+            if (dateKey === day && soldStatus) {
+                todaySoldRevenue += rev;
+                todaySoldCost += cost;
+            }
+            if (monthKey === month) {
+                monthlyRevenue += rev;
+                monthlyCost += cost;
+            }
         }
 
         metricTotalRevenue.textContent = formatRwf(totalRevenue);
         metricTotalCost.textContent = formatRwf(totalCost);
-        metricTotalProfit.textContent = formatRwf(totalProfit);
-        metricDailyProfit.textContent = formatRwf(dailyProfit);
-        if (metricTodaySoldProfit) metricTodaySoldProfit.textContent = formatRwf(todaySoldProfit);
-        metricMonthlyProfit.textContent = formatRwf(monthlyProfit);
+        metricTotalProfit.textContent = formatRwf(roundMoney(totalGrossProfit));
+        metricDailyProfit.textContent = formatRwf(roundMoney(dailyRevenue - dailyCost));
+        if (metricTodaySoldProfit) metricTodaySoldProfit.textContent = formatRwf(roundMoney(todaySoldRevenue - todaySoldCost));
+        metricMonthlyProfit.textContent = formatRwf(roundMoney(monthlyRevenue - monthlyCost));
         metricSoldItems.textContent = String(soldItems);
     }
 
@@ -1905,6 +2225,10 @@
 
     function dismissAlertPopup(popupKey) {
         if (!popupKey) return;
+        if (popupAutoDismissTimers.has(popupKey)) {
+            clearTimeout(popupAutoDismissTimers.get(popupKey));
+            popupAutoDismissTimers.delete(popupKey);
+        }
         dismissedAlertPopups.add(popupKey);
         renderAlertPopups(activePopupAlerts);
     }
@@ -1917,6 +2241,14 @@
     }
 
     async function handleAlertPopupClick(event) {
+        const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+        // Tap on a popup to dismiss immediately in mobile toast mode.
+        const popupCard = event.target.closest("[data-alert-popup]");
+        if (isMobileViewport && popupCard && !event.target.closest("[data-alert-action]")) {
+            dismissAlertPopup(popupCard.getAttribute("data-alert-popup"));
+            return;
+        }
+
         const dismissButton = event.target.closest("[data-popup-dismiss]");
         if (dismissButton) {
             dismissAlertPopup(dismissButton.getAttribute("data-popup-dismiss"));
@@ -1955,28 +2287,72 @@
         const filtered = applySalesFilters(salesReportRows);
         renderSales(filtered);
         renderSalesSummary(filtered);
+        recalculateGrossProfitFromVisibleRows();
+        renderProfitDebug(filtered);
         renderMetrics(filtered);
         renderCharts(filtered);
         setStatus(salesStatus, `${filtered.length} report record(s).`);
     }
 
-    async function recalculateTodaySalesProfit() {
-        const dayKey = todayDateKey();
-        setStatus(salesStatus, "Recalculating today's sales profit...");
-        if (recalcTodayProfitBtn) recalcTodayProfitBtn.disabled = true;
+    async function attemptRecalculateTodaySalesProfitRpc(dayKey) {
+        const rpcVariants = [
+            { fn: "recalculate_today_sales_profit", args: { p_day: dayKey } },
+            { fn: "recalculate_today_sales_profit", args: { day_key: dayKey } },
+            { fn: "recalculate_today_sales_profit", args: { target_date: dayKey } },
+            { fn: "recalculate_today_sales_profit", args: {} },
+            { fn: "recalculate_sales_profit_for_date", args: { p_day: dayKey } },
+            { fn: "recalculate_sales_profit_for_date", args: { day_key: dayKey } },
+            { fn: "recalculate_sales_profit_for_date", args: { target_date: dayKey } }
+        ];
 
-        try {
-            const rpcAttempt = await supabaseClient.rpc("recalculate_today_sales_profit", {
-                p_day: dayKey
-            });
+        let lastError = null;
+        for (const variant of rpcVariants) {
+            const rpcAttempt = await supabaseClient.rpc(variant.fn, variant.args);
             if (!rpcAttempt.error) {
                 const rpcResult = Array.isArray(rpcAttempt.data) ? rpcAttempt.data[0] : rpcAttempt.data;
                 const updatedCount = Math.max(0, Math.floor(toNumber(rpcResult?.updated_count ?? rpcResult?.updated ?? rpcResult, 0)));
+                return { updatedCount, usedRpc: true };
+            }
+
+            lastError = rpcAttempt.error;
+            const errorMessage = String(rpcAttempt.error?.message || "").toLowerCase();
+            const likelyMissingFn =
+                errorMessage.includes("could not find") ||
+                errorMessage.includes("does not exist") ||
+                errorMessage.includes("not found") ||
+                (errorMessage.includes("function") && errorMessage.includes("schema cache"));
+            const likelyBadArgs =
+                errorMessage.includes("arguments") ||
+                errorMessage.includes("parameter") ||
+                errorMessage.includes("signature");
+
+            if (likelyMissingFn || likelyBadArgs) {
+                continue;
+            }
+
+            break;
+        }
+
+        return { updatedCount: 0, usedRpc: false, error: lastError };
+    }
+
+    async function recalculateTodaySalesProfit() {
+        const dayKey = todayDateKey();
+        setStatus(salesStatus, "Recalculating today's gross profit...");
+        if (recalcTodayProfitBtn) recalcTodayProfitBtn.disabled = true;
+
+        try {
+            const rpcResult = await attemptRecalculateTodaySalesProfitRpc(dayKey);
+            if (rpcResult.usedRpc) {
                 await refreshSalesDashboard(false);
-                setStatus(salesStatus, `Updated ${updatedCount} today's sale(s) with the profit formula.`, "success");
+                setStatus(salesStatus, `Updated ${rpcResult.updatedCount} today's sale(s) with the gross profit formula.`, "success");
                 return;
             }
 
+            // RPC not available — attempt manual row-by-row update, then always
+            // refresh and recompute the displayed figures regardless of whether
+            // any DB rows actually changed (fixes the "button does nothing" case
+            // where profit values were already correct in the DB but the UI was stale).
             const salesRows = await loadSalesRaw();
             const todaysRows = salesRows.filter((row) => {
                 const status = String(row.status || "").toLowerCase();
@@ -1984,49 +2360,53 @@
                 return toCalendarDateKey(saleDate(row)) === dayKey;
             });
 
-            if (!todaysRows.length) {
-                setStatus(salesStatus, "No sales found for today.", "warn");
-                return;
-            }
-
             let updated = 0;
             let failed = 0;
-            for (const row of todaysRows) {
-                if (!row?.id) continue;
-                const computedProfit = roundMoney(saleRevenue(row) - saleCost(row));
-                const currentProfit = toNumber(row.profit, NaN);
-                if (Number.isFinite(currentProfit) && Math.abs(currentProfit - computedProfit) < 0.0001) {
-                    continue;
-                }
 
-                const { error } = await supabaseClient
-                    .from("sales")
-                    .update({ profit: computedProfit })
-                    .eq("id", row.id);
-                if (error) {
-                    failed += 1;
-                    continue;
+            if (todaysRows.length) {
+                for (const row of todaysRows) {
+                    if (!row?.id) continue;
+                    const computedProfit = roundMoney(saleRevenue(row) - saleCost(row));
+                    const currentProfit = toNumber(row.profit, NaN);
+                    if (Number.isFinite(currentProfit) && Math.abs(currentProfit - computedProfit) < 0.0001) {
+                        continue;
+                    }
+
+                    const { error } = await supabaseClient
+                        .from("sales")
+                        .update({ profit: computedProfit })
+                        .eq("id", row.id);
+                    if (error) {
+                        failed += 1;
+                        continue;
+                    }
+                    updated += 1;
                 }
-                updated += 1;
             }
 
+            // Always reload data and recompute displayed gross profit from current
+            // selling/cost prices — this is what makes the button visibly useful.
             await refreshSalesDashboard(false);
-            if (updated === 0 && failed === 0) {
-                setStatus(salesStatus, "Today's sales were already using selling price minus cost price.", "success");
+            recalculateGrossProfitFromVisibleRows();
+
+            if (!todaysRows.length) {
+                setStatus(salesStatus, "No sales found for today. Gross profit display refreshed.", "warn");
             } else if (failed > 0 && updated === 0) {
                 setStatus(
                     salesStatus,
-                    "Could not update today's sales from this browser session. Apply the backend RPC/policy update, then retry.",
-                    "error"
+                    "Gross profit display refreshed. DB rows could not be updated — apply the backend RPC/policy update to persist changes.",
+                    "warn"
                 );
             } else if (failed > 0) {
-                setStatus(salesStatus, `Updated ${updated} sale(s), but ${failed} row(s) could not be updated.`, "warn");
+                setStatus(salesStatus, `Gross profit refreshed. Updated ${updated} sale(s) in DB; ${failed} row(s) could not be updated.`, "warn");
+            } else if (updated > 0) {
+                setStatus(salesStatus, `Gross profit refreshed. Updated ${updated} today's sale(s) in the database.`, "success");
             } else {
-                setStatus(salesStatus, `Updated ${updated} today's sale(s) with the profit formula.`, "success");
+                setStatus(salesStatus, "Gross profit recalculated from current prices.", "success");
             }
         } catch (error) {
             console.error(error);
-            setStatus(salesStatus, error.message || "Failed to recalculate today's sales profit.", "error");
+            setStatus(salesStatus, error.message || "Failed to recalculate today's gross profit.", "error");
         } finally {
             if (recalcTodayProfitBtn) recalcTodayProfitBtn.disabled = false;
         }
@@ -2037,12 +2417,15 @@
         try {
             const salesRows = await loadSalesRaw();
             const priceRows = await loadPriceChangeLogsRaw();
-            salesReportRows = createReportEntries(salesRows, priceRows);
+            const persistedEntries = createReportEntries(salesRows, priceRows);
+            const paidFromUnpaid = buildPaidEntriesFromUnpaidItems();
+            salesReportRows = persistedEntries.concat(paidFromUnpaid).sort((a, b) => new Date(b.date) - new Date(a.date));
             renderSalesDashboardFromCurrentFilters();
         } catch (error) {
             console.error(error);
             setStatus(salesStatus, error.message || "Failed to load sales.", "error");
-            salesBody.innerHTML = '<tr><td colspan="9">Failed to load sales records.</td></tr>';
+            salesBody.innerHTML = '<tr><td colspan="14">Failed to load sales records.</td></tr>';
+            if (profitDebugOutput) profitDebugOutput.textContent = "Failed to load sales debug data.";
             renderSalesSummary([]);
         }
     }
@@ -2119,9 +2502,11 @@
         try {
             const salesRows = await loadSalesRaw();
             const priceRows = await loadPriceChangeLogsRaw();
-            const filtered = applySalesFilters(createReportEntries(salesRows, priceRows));
+            const filtered = applySalesFilters(
+                createReportEntries(salesRows, priceRows).concat(buildPaidEntriesFromUnpaidItems())
+            );
 
-            const headers = ["created_at", "entry_type", "product", "details", "quantity", "units_sold", "selling_price", "cost_price", "profit", "status", "sold_by"];
+            const headers = ["created_at", "entry_type", "product", "details", "quantity", "units_sold", "selling_price", "cost_price", "gross_profit", "extra_costs", "net_profit", "status", "sold_by"];
             const lines = [headers.join(",")];
             for (const row of filtered) {
                 const out = row.kind === "sale" ? {
@@ -2133,7 +2518,9 @@
                     units_sold: Math.max(1, toNumber(row.raw?.units_sold, toNumber(row.quantity, 1))),
                     selling_price: row.revenue,
                     cost_price: row.cost,
-                    profit: row.profit,
+                    gross_profit: row.grossProfit,
+                    extra_costs: row.extraCosts,
+                    net_profit: row.netProfit,
                     status: row.status,
                     sold_by: row.raw?.sold_by || ""
                 } : {
@@ -2145,7 +2532,9 @@
                     units_sold: "",
                     selling_price: "",
                     cost_price: "",
-                    profit: "",
+                    gross_profit: "",
+                    extra_costs: "",
+                    net_profit: "",
                     status: row.status,
                     sold_by: row.raw?.admin_name || ""
                 };
@@ -2183,6 +2572,61 @@
     }
 
     window.resetSalesFilters = clearFilters;
+
+    function refreshFromCurrentData() {
+        renderUnpaidItems();
+        renderSalesDashboardFromCurrentFilters();
+    }
+
+    function handleUnpaidItemSubmit(event) {
+        if (event?.preventDefault) event.preventDefault();
+        const payload = createUnpaidItemPayload();
+        if (!payload.product_name) {
+            setStatus(unpaidItemsStatus, "Product name is required.", "error");
+            return;
+        }
+        if (payload.selling_price_per_unit < 0 || payload.cost_price_per_unit < 0) {
+            setStatus(unpaidItemsStatus, "Prices must be 0 or greater.", "error");
+            return;
+        }
+        if (payload.status === "paid") payload.paid_at = new Date().toISOString();
+        if (payload.status === "returned") payload.returned_at = new Date().toISOString();
+
+        unpaidItems.unshift(payload);
+        saveUnpaidItems();
+        if (unpaidItemForm) unpaidItemForm.reset();
+        if (unpaidStatusInput) unpaidStatusInput.value = "taken";
+        setStatus(unpaidItemsStatus, `Added ${payload.product_name} as ${payload.status}.`, "success");
+        refreshFromCurrentData();
+    }
+
+    function updateUnpaidItemStatus(itemId, nextStatus) {
+        const item = unpaidItems.find((entry) => entry.id === itemId);
+        if (!item) return;
+        const normalized = unpaidStatusClass(nextStatus);
+        if (item.status === normalized) return;
+        item.status = normalized;
+        if (normalized === "paid") item.paid_at = item.paid_at || new Date().toISOString();
+        if (normalized === "returned") item.returned_at = new Date().toISOString();
+        saveUnpaidItems();
+        setStatus(unpaidItemsStatus, `${item.product_name || "Item"} marked as ${normalized}.`, "success");
+        refreshFromCurrentData();
+    }
+
+    function handleUnpaidItemTableClick(event) {
+        const button = event.target.closest("[data-unpaid-action]");
+        if (!button) return;
+        const action = button.getAttribute("data-unpaid-action");
+        const itemId = button.getAttribute("data-unpaid-id");
+        if (!itemId) return;
+        if (action === "paid") {
+            updateUnpaidItemStatus(itemId, "paid");
+            return;
+        }
+        if (action === "returned") {
+            updateUnpaidItemStatus(itemId, "returned");
+        }
+    }
 
     function subscribeRealtime() {
         supabaseClient
@@ -2224,6 +2668,9 @@
         const authorized = await requireAuth();
         if (!authorized) return;
 
+        unpaidItems = loadUnpaidItems();
+        renderUnpaidItems();
+
         productForm.addEventListener("submit", upsertProductFromForm);
         logoutBtn.addEventListener("click", async () => {
             await supabaseClient.auth.signOut();
@@ -2242,6 +2689,12 @@
         filterProduct.addEventListener("input", renderSalesDashboardFromCurrentFilters);
         filterSaleType.addEventListener("change", renderSalesDashboardFromCurrentFilters);
         if (recalcTodayProfitBtn) recalcTodayProfitBtn.addEventListener("click", recalculateTodaySalesProfit);
+        if (unpaidItemForm) unpaidItemForm.addEventListener("submit", handleUnpaidItemSubmit);
+        if (unpaidItemsBody) unpaidItemsBody.addEventListener("click", handleUnpaidItemTableClick);
+        if (salesBody) {
+            salesBody.addEventListener("input", recalculateGrossProfitFromVisibleRows);
+            salesBody.addEventListener("change", recalculateGrossProfitFromVisibleRows);
+        }
         if (inventorySearch) {
             inventorySearch.addEventListener("input", () => {
                 inventorySearchTerm = inventorySearch.value.trim();
