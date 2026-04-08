@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unpaid / Rent Items</title>
+    <style>
+        :root { --bg:#f2f5f7; --card:#fff; --text:#243746; --muted:#5d6d7a; --primary:#1f8ef1; --success:#1b9c5a; --danger:#cf2e2e; --border:#d6dee6; --warning:#d18800; }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--bg); color:var(--text); padding:20px; }
+        .wrap { max-width:1100px; margin:0 auto; }
+        .card { background:var(--card); border-radius:12px; padding:16px; box-shadow:0 8px 22px rgba(0,0,0,0.08); margin-bottom:16px; }
+        .topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; }
+        .btn { border:none; border-radius:8px; padding:10px 12px; color:#fff; cursor:pointer; font-weight:700; font-size:0.92rem; }
+        .btn-primary { background:var(--primary); }
+        .btn-success { background:var(--success); }
+        .btn-danger { background:var(--danger); }
+        .muted { color:var(--muted); font-size:0.9rem; }
+        .form-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; align-items:end; }
+        label { display:block; font-size:0.9rem; color:var(--muted); margin-bottom:4px; }
+        input, select { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.95rem; background:#fff; }
+        .status { font-size:0.92rem; min-height:18px; margin-top:10px; color:#314658; }
+        .status.error { color:var(--danger); }
+        .status.warn { color:var(--warning); }
+        .status.success { color:var(--success); }
+        .table-wrap { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; min-width:780px; }
+        th, td { text-align:left; padding:10px; border-bottom:1px solid #e7edf2; vertical-align:middle; }
+        th { font-size:0.84rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; }
+        .actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .dashboard-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:10px; }
+        .metric { border:1px solid var(--border); border-radius:10px; padding:10px; background:#fbfdff; }
+        .metric-label { color:var(--muted); font-size:0.86rem; margin-bottom:6px; }
+        .metric-value { font-size:1.15rem; font-weight:700; }
+        .status-chip { display:inline-flex; align-items:center; border-radius:999px; padding:3px 10px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+        .status-chip.taken { background:#fff4cc; color:#8a5a00; border:1px solid #f0d884; }
+        .status-chip.paid { background:#e4f7eb; color:#1b7d4d; border:1px solid #b8e2ca; }
+        .status-chip.returned { background:#fde7e7; color:#a12525; border:1px solid #f2c2c2; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="topbar">
+            <h1>Unpaid / Rent Items</h1>
+            <a href="admin.html" class="btn btn-primary" style="text-decoration:none;">Back to Admin</a>
+        </div>
+        <section class="card">
+            <p class="muted">Only items with status <strong>paid</strong> are counted as sales in the admin dashboard.</p>
+            <form id="unpaidItemForm">
+                <div class="form-grid">
+                    <div><label for="unpaidProductName">Product Name</label><input id="unpaidProductName" type="text" required></div>
+                    <div><label for="unpaidUnits">Units</label><input id="unpaidUnits" type="number" min="1" step="1" required></div>
+                    <div><label for="unpaidSellingUnit">Selling Price / Unit (RWF)</label><input id="unpaidSellingUnit" type="number" min="0" step="1" required></div>
+                    <div><label for="unpaidCostUnit">Cost Price / Unit (RWF)</label><input id="unpaidCostUnit" type="number" min="0" step="1" required></div>
+                    <div>
+                        <label for="unpaidStatus">Status</label>
+                        <select id="unpaidStatus">
+                            <option value="taken" selected>taken</option>
+                            <option value="paid">paid</option>
+                            <option value="returned">returned</option>
+                        </select>
+                    </div>
+                    <div><button class="btn btn-primary" type="submit">Add Item</button></div>
+                </div>
+            </form>
+            <div id="unpaidItemsStatus" class="status"></div>
+            <div class="dashboard-grid">
+                <div class="metric"><div class="metric-label">Taken Items</div><div id="unpaidTakenCount" class="metric-value">0</div></div>
+                <div class="metric"><div class="metric-label">Paid Items</div><div id="unpaidPaidCount" class="metric-value">0</div></div>
+                <div class="metric"><div class="metric-label">Returned Items</div><div id="unpaidReturnedCount" class="metric-value">0</div></div>
+            </div>
+            <div class="table-wrap" style="margin-top:12px;">
+                <table>
+                    <thead><tr><th>Date</th><th>Product</th><th>Units</th><th>Selling / Unit</th><th>Cost / Unit</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="unpaidItemsBody"><tr><td colspan="7">No unpaid/rent items yet.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./env.js"></script>
+    <script src="./supabase-client.js"></script>
+    <script src="./unpaid-items.js?v=20260407v2"></script>
+</body>
+</html>
