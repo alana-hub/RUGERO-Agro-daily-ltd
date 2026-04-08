@@ -1,7 +1,7 @@
 (() => {
     if (window.__RUGERO_SALES_UPGRADES_INIT__) return;
     window.__RUGERO_SALES_UPGRADES_INIT__ = true;
-
+    
     const STORAGE_BUCKET = "products";
     const LOW_STOCK_THRESHOLD = 5;
     const LOW_MARGIN_THRESHOLD = 0.1;
