@@ -2691,6 +2691,7 @@
         if (recalcTodayProfitBtn) recalcTodayProfitBtn.addEventListener("click", recalculateTodaySalesProfit);
         if (unpaidItemForm) unpaidItemForm.addEventListener("submit", handleUnpaidItemSubmit);
         if (unpaidItemsBody) unpaidItemsBody.addEventListener("click", handleUnpaidItemTableClick);
+        if (recalcTodayProfitBtn) recalcTodayProfitBtn.addEventListener("click", recalculateTodaySalesProfit);
         if (salesBody) {
             salesBody.addEventListener("input", recalculateGrossProfitFromVisibleRows);
             salesBody.addEventListener("change", recalculateGrossProfitFromVisibleRows);
