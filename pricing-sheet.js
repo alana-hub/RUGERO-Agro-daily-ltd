@@ -57,7 +57,7 @@
   }
 
   function rowStatus(row) {
-    return toNumber(row.product_quantity, 0) > 0 ? "available" : "out_of_stock";
+    return toNumber(row.product_quantity, toNumber(row.stock, 0)) > 0 ? "available" : "out_of_stock";
   }
 
   function isMissingFunctionError(error, fnName) {
@@ -194,6 +194,11 @@
     const quantityInput = rowEl.querySelector('input[data-field="product_quantity"]');
     const purchaseInput = rowEl.querySelector('input[data-field="purchase_price"]');
     const statusCell = rowEl.querySelector('[data-role="status"]');
+    if (!quantityInput || !purchaseInput) {
+      setStatus("Unable to save: missing row inputs.", "error");
+      buttonEl.disabled = false;
+      return;
+    }
     const unitsPerBox = Math.max(1, Math.floor(toNumber(statusCell?.dataset.unitsPerBox, 1)));
 
     const product_quantity = Math.max(0, Math.floor(toNumber(quantityInput?.value, 0)));
@@ -230,7 +235,7 @@
 
     const { error } = await updateProductRow(productId, payload);
     buttonEl.disabled = false;
-    buttonEl.textContent = "Save";
+    buttonEl.textContent = correctionModeEnabled ? "Save & Recalculate System" : "Save";
 
     if (error) {
       console.error(error);
@@ -271,7 +276,7 @@
       return { error: error.message || "Correction Mode failed." };
     }
 
-    const result = data || {};
+    const result = Array.isArray(data) ? (data[0] || {}) : (data || {});
     return {
       salesUpdated: Math.max(0, toNumber(result.sales_updated, 0)),
       reportsUpdated: Math.max(0, toNumber(result.reports_updated, 0)),
