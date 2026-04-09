@@ -46,7 +46,6 @@
         .product-card:hover { transform: translateY(-4px); }
         .product-image { width: 100%; height: 240px; object-fit: cover; border-radius: 12px; background-color: #ececec; }
         .product-name { margin: 4px 0; font-size: 1.1rem; }
-        .price-tag { font-size: 1rem; font-weight: 700; margin: 0; }
         .row-actions { display: grid; gap: 8px; margin-top: auto; }
         .btn-shop { border: none; padding: 10px 12px; border-radius: 10px; font-weight: 700; color: #fff; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease; }
         .btn-shop:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12); }
@@ -130,10 +129,6 @@
             .floating-call { animation: none; }
         }
     </style>
-     <nav class="taskbar" aria-label="Quick admin navigation">
-    <a class="taskbar-link" href="login.html">Staff Login</a>
-   </nav>
-  
 </head>
 <body>
     <div class="wrap">
@@ -148,8 +143,6 @@
             <select id="sortSelect" class="form-select">
                 <option value="newest">Sort: Newest</option>
                 <option value="name_asc">Name: A-Z</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
             </select>
         </div>
 
@@ -203,10 +196,6 @@
         let productsPollId = null;
         let productHandlersBound = false;
         let productsLoadPromise = null;
-
-        function formatRwf(value) {
-            return new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(Number(value) || 0);
-        }
 
         function fallbackImageSrc(label) {
             const safeLabel = String(label || "Image")
@@ -275,16 +264,6 @@
             return phone ? `tel:${phone}` : "#";
         }
 
-        function productDisplayPrice(item) {
-            const unit = Number(item.price_per_unit) || 0;
-            const unitsPerBox = Number(item.units_per_box);
-            const manualBox = Number(item.price_per_box);
-            const canBox = Number.isFinite(unitsPerBox) && unitsPerBox > 0;
-            if (!canBox) return `Unit: ${formatRwf(unit)}`;
-            const box = Number.isFinite(manualBox) && manualBox > 0 ? manualBox : unit * unitsPerBox;
-            return `Unit: ${formatRwf(unit)} | Box: ${formatRwf(box)}`;
-        }
-
         function applyFilters() {
             const search = searchInput.value.trim().toLowerCase();
             const sort = sortSelect.value;
@@ -296,8 +275,6 @@
 
             rows.sort((a, b) => {
                 if (sort === "name_asc") return String(a.name || "").localeCompare(String(b.name || ""));
-                if (sort === "price_asc") return (Number(a.price_per_unit) || 0) - (Number(b.price_per_unit) || 0);
-                if (sort === "price_desc") return (Number(b.price_per_unit) || 0) - (Number(a.price_per_unit) || 0);
                 return new Date(b.created_at || 0) - new Date(a.created_at || 0);
             });
 
@@ -328,7 +305,6 @@
                     <article class="product-card">
                         <img src="${imageSrc}" alt="${safeName}" class="product-image" loading="lazy">
                         <h3 class="product-name">${safeName}</h3>
-                        <p class="price-tag">${productDisplayPrice(item)}</p>
                         <div class="row-actions">
                             <button class="btn-shop btn-whatsapp" ${outOfStock ? "disabled" : ""} onclick="window.open('${getWhatsAppLink(message)}', '_blank')">WhatsApp</button>
                             <a class="btn-shop btn-call${callDisabled ? " is-disabled" : ""}" href="${callHref}" ${callDisabled ? 'aria-disabled="true" tabindex="-1"' : ""}>
@@ -405,55 +381,4 @@
         function initFloatingButtons() {
             floatingWhatsApp.href = getWhatsAppLink(`Hello! I want to order from ${window.appConfig.businessName}.`);
             floatingWhatsApp.target = "_blank";
-            floatingWhatsApp.setAttribute("aria-disabled", floatingWhatsApp.href === "#" ? "true" : "false");
-            floatingCall.href = getCallLink();
-            floatingCall.setAttribute("aria-disabled", floatingCall.href === "#" ? "true" : "false");
-            floatingCall.classList.toggle("is-disabled", floatingCall.href === "#");
-        }
-
-        function updateSeoMetadata() {
-            const businessNameText = window.appConfig.businessName || "RUGERO Agro-Daily Ltd";
-            const title = `${businessNameText} | Online Shop`;
-            const description = `Shop ${businessNameText} online with direct WhatsApp ordering, product browsing, and quick contact options.`;
-            const canonicalUrl = `${window.location.origin}${window.location.pathname}`;
-
-            document.title = title;
-            brandName.textContent = businessNameText.toUpperCase();
-
-            const descriptionMeta = document.querySelector('meta[name="description"]');
-            const ogTitle = document.querySelector('meta[property="og:title"]');
-            const ogDescription = document.querySelector('meta[property="og:description"]');
-            const twitterTitle = document.querySelector('meta[property="twitter:title"]');
-            const twitterDescription = document.querySelector('meta[property="twitter:description"]');
-
-            if (descriptionMeta) descriptionMeta.setAttribute("content", description);
-            if (ogTitle) ogTitle.setAttribute("content", title);
-            if (ogDescription) ogDescription.setAttribute("content", description);
-            if (twitterTitle) twitterTitle.setAttribute("content", title);
-            if (twitterDescription) twitterDescription.setAttribute("content", description);
-            if (canonicalLink) canonicalLink.setAttribute("href", canonicalUrl);
-            if (ogUrl) ogUrl.setAttribute("content", canonicalUrl);
-        }
-
-        function init() {
-            try {
-                supabaseClient = createSupabaseClientOrFail();
-            } catch (error) {
-                statusLine.textContent = error.message || "Missing configuration.";
-                return;
-            }
-
-            updateSeoMetadata();
-            attachImageFallback(brandLogo, window.appConfig.businessName || "Shop");
-            ensureFavicon();
-            initFloatingButtons();
-            searchInput.addEventListener("input", applyFilters);
-            sortSelect.addEventListener("change", applyFilters);
-            loadProducts();
-            subscribeRealtime();
-        }
-
-        init();
-    </script>
-</body>
-</html>
+         
