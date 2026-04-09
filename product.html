@@ -105,8 +105,6 @@
         <div><img id="productImage" alt="Product image"></div>
         <div>
           <h1 id="productName">Loading...</h1>
-          <p id="productPrice"></p>
-          <p id="productBox"></p>
           <div class="actions">
             <a id="waBtn" class="btn wa" href="#" target="_blank">WhatsApp</a>
             <a id="callBtn" class="btn call" href="#">
@@ -131,10 +129,6 @@
   <script src="./supabase-client.js"></script>
   <script>
     const productImage = document.getElementById("productImage");
-
-    function formatRwf(value) {
-      return new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(Number(value) || 0);
-    }
 
     function fallbackImageSrc(label) {
       const safeLabel = String(label || "Image")
@@ -206,15 +200,7 @@
       const businessNameText = window.appConfig?.businessName || "RUGERO Agro-Daily Ltd";
       const productName = product?.name || "Product Details";
       const title = `${productName} | ${businessNameText}`;
-      const hasBox = Number(product?.units_per_box) > 0;
-      const boxPrice = hasBox
-        ? (Number.isFinite(Number(product?.price_per_box)) && Number(product.price_per_box) > 0
-          ? Number(product.price_per_box)
-          : Number(product?.price_per_unit || 0) * Number(product?.units_per_box || 0))
-        : null;
-      const description = hasBox
-        ? `${productName} at ${formatRwf(product?.price_per_unit)} per unit or ${formatRwf(boxPrice)} per box from ${businessNameText}.`
-        : `${productName} at ${formatRwf(product?.price_per_unit)} from ${businessNameText}.`;
+      const description = `${productName} by ${businessNameText}. Contact us for availability and ordering details.`;
       const canonicalUrl = window.location.href;
 
       document.title = title;
@@ -269,18 +255,6 @@
 
         document.getElementById("productName").textContent = data.name || "Unnamed";
         productImage.src = data.image || fallbackImageSrc("Product image");
-        document.getElementById("productPrice").textContent = `Price per unit: ${formatRwf(data.price_per_unit)}`;
-        const canBox = Number(data.units_per_box) > 0;
-        const manualBox = Number(data.price_per_box);
-        const boxPrice = canBox
-          ? (Number.isFinite(manualBox) && manualBox > 0
-            ? manualBox
-            : Number(data.price_per_unit || 0) * Number(data.units_per_box || 0))
-          : null;
-        document.getElementById("productBox").textContent = canBox
-          ? `Price per box (${data.units_per_box} units): ${formatRwf(boxPrice)}`
-          : "This product is sold by unit only.";
-
         updateSeoMetadata(data);
         document.getElementById("waBtn").href = waLink(`Hello! I am interested in ${data.name} from ${window.appConfig.businessName}.`);
         applyCallButtonState(callLink());
@@ -293,4 +267,4 @@
     init();
   </script>
 </body>
-</html>
+  </html>
