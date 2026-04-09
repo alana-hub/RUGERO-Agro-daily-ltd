@@ -46,7 +46,6 @@
         .product-card:hover { transform: translateY(-4px); }
         .product-image { width: 100%; height: 240px; object-fit: cover; border-radius: 12px; background-color: #ececec; }
         .product-name { margin: 4px 0; font-size: 1.1rem; }
-        .price-tag { font-size: 1rem; font-weight: 700; margin: 0; }
         .row-actions { display: grid; gap: 8px; margin-top: auto; }
         .btn-shop { border: none; padding: 10px 12px; border-radius: 10px; font-weight: 700; color: #fff; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease; }
         .btn-shop:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12); }
@@ -173,7 +172,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./env.js"></script>
-    <script src="./supabase-client.js"></script>
+    <script src="./supabase-client.js?v=20260409v2"></script>
     <script>
         const shopContainer = document.getElementById("shopContainer");
         const statusLine = document.getElementById("statusLine");
@@ -197,6 +196,12 @@
         let productsPollId = null;
         let productHandlersBound = false;
         let productsLoadPromise = null;
+        const storefrontDebugEnabled = true;
+
+        function storefrontLog(...args) {
+            if (!storefrontDebugEnabled) return;
+            console.log("[storefront:ui]", ...args);
+        }
 
         function fallbackImageSrc(label) {
             const safeLabel = String(label || "Image")
@@ -265,6 +270,44 @@
             return phone ? `tel:${phone}` : "#";
         }
 
+
+        async function loadProductsDirectFromTable() {
+            const attempts = [
+                "id, name, image, created_at, product_quantity, stock, status",
+                "id, name, image, created_at, product_quantity, status",
+                "id, name, image, created_at, stock, status",
+                "id, name, image, created_at, status",
+                "id, name, image, created_at"
+            ];
+
+            let lastError = null;
+            for (const selectClause of attempts) {
+                const result = await supabaseClient
+                    .from("products")
+                    .select(selectClause)
+                    .order("created_at", { ascending: false });
+
+                if (!result.error) {
+                    const rows = Array.isArray(result.data) ? result.data : [];
+                    return rows.map((row) => ({
+                        ...row,
+                        id: row?.id || row?.product_id || "",
+                        name: row?.name || row?.product_name || "",
+                        image: row?.image || row?.image_url || "",
+                        product_quantity: Number(row?.product_quantity ?? row?.stock ?? 0) || 0
+                    })).filter(Boolean);
+                }
+
+                lastError = result.error;
+                const msg = String(result.error?.message || "");
+                if (!/column .* does not exist/i.test(msg)) {
+                    throw result.error;
+                }
+            }
+
+            throw lastError || new Error("Unable to query products table.");
+        }
+
         function applyFilters() {
             const search = searchInput.value.trim().toLowerCase();
             const sort = sortSelect.value;
@@ -290,6 +333,7 @@
             }
 
             statusLine.textContent = `${products.length} product(s) available.`;
+            storefrontLog("renderProducts", { count: products.length, sample: products[0] || null });
             shopContainer.innerHTML = products.map((item) => {
                 const safeName = escapeHtml(item.name || "Unnamed product");
                 const safeImage = escapeHtml(item.image || "");
@@ -315,7 +359,7 @@
                                     <span class="btn-meta">${callDisabled ? "Number unavailable" : "Talk to the shop"}</span>
                                 </span>
                             </a>
-                            <a class="btn-shop btn-link" href="product.html?id=${encodeURIComponent(item.id)}">View Details</a>
+                            <a class="btn-shop btn-link" href="${item.id ? `product.html?id=${encodeURIComponent(item.id)}` : '#'}" ${item.id ? "" : 'aria-disabled="true" tabindex="-1"'}>View Details</a>
                         </div>
                     </article>
                 `;
@@ -330,54 +374,4 @@
             const showLoading = options.showLoading !== false;
             productsLoadPromise = (async () => {
                 if (showLoading) {
-                    statusLine.textContent = "Loading products...";
-                    shopContainer.innerHTML = '<div class="placeholder">Loading products...</div>';
-                }
-
-                try {
-                    allProducts = await listStorefrontProducts(supabaseClient);
-                    applyFilters();
-                } catch (error) {
-                    console.error("Unexpected product load failure:", error);
-                    statusLine.textContent = "Unable to reach the shop service right now.";
-                    shopContainer.innerHTML = '<div class="placeholder">Unable to load products. Please try again later.</div>';
-                }
-            })();
-
-            try {
-                await productsLoadPromise;
-            } finally {
-                productsLoadPromise = null;
-            }
-        }
-
-        function stopProductSync() {
-            if (productsPollId) {
-                window.clearInterval(productsPollId);
-                productsPollId = null;
-            }
-        }
-
-        function scheduleProductRefresh() {
-            if (document.visibilityState === "hidden") return;
-            loadProducts({ showLoading: false });
-        }
-
-        function subscribeRealtime() {
-            if (!productsPollId) {
-                productsPollId = window.setInterval(scheduleProductRefresh, 30000);
-            }
-
-            if (productHandlersBound) return;
-
-            document.addEventListener("visibilitychange", () => {
-                if (document.visibilityState === "visible") {
-                    scheduleProductRefresh();
-                }
-            });
-            window.addEventListener("beforeunload", stopProductSync);
-            productHandlersBound = true;
-        }
-
-        function initFloatingButtons() {
-            floatingWhatsApp.href = getWhatsAppLink(`Hello! I want to order from ${window.appConfig.busine
+    
