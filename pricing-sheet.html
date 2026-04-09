@@ -34,6 +34,21 @@
     .muted { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
 
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid #d1e1f1;
+      background: #e9f2fb;
+      color: #24435f;
+      text-decoration: none;
+      font-weight: 700;
+      padding: 8px 12px;
+      font-size: 0.86rem;
+    }
+    .nav-link.is-active { background: #dbeeff; border-color: #b9d7f0; }
     .btn {
       border: none;
       border-radius: 8px;
@@ -105,6 +120,11 @@
         <button id="logoutBtn" class="btn btn-danger" type="button">Logout</button>
       </div>
     </div>
+    <nav class="nav-links" aria-label="Admin page navigation">
+      <a class="nav-link" href="admin.html">Admin Dashboard</a>
+      <a class="nav-link is-active" href="pricing-sheet.html" aria-current="page">Pricing & Cost Sheet</a>
+      <a class="nav-link" href="unpaid.html">Unpaid / Rent Items</a>
+    </nav>
 
     <section class="card">
       <div class="correction-controls">
