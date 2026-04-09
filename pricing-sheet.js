@@ -68,7 +68,7 @@
 
   function isMissingFunctionError(error, fnName) {
     const message = String(error?.message || "");
-    return new RegExp(`Could not find the function|${fnName}`, "i").test(message);
+    return new RegExp(`Could not find the function|function .* does not exist|${fnName}`, "i").test(message);
   }
 
   function isMissingColumnError(error, columnName) {
