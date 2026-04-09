@@ -2,7 +2,7 @@
   const cfg = window.__SHOP_ENV__ || {};
   const url = (cfg.NEXT_PUBLIC_SUPABASE_URL || "").trim();
   const key = (cfg.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
-  const requestTimeoutMs = 12000;
+  const REQUEST_TIMEOUT_MS = 12000;
 
   window.appConfig = {
     businessName: cfg.BUSINESS_NAME || "Aboubakar Collection Online Shop",
@@ -22,22 +22,22 @@
     return window.supabase.createClient(url, key);
   };
 
-  function withTimeout(promise, label) {
-    let timerId;
-    const timeoutPromise = new Promise((_, reject) => {
-      timerId = window.setTimeout(() => {
-        reject(new Error(`${label} timed out after ${requestTimeoutMs / 1000}s`));
-      }, requestTimeoutMs);
-    });
-
-    return Promise.race([promise, timeoutPromise]).finally(() => {
-      if (timerId) window.clearTimeout(timerId);
-    });
-  }
-
   function isMissingRpc(error, functionName) {
     const message = String(error?.message || error || "");
     return new RegExp(`Could not find the function|function .* does not exist|${functionName}`, "i").test(message);
+  }
+
+  function withTimeout(promise, label) {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = window.setTimeout(() => {
+        reject(new Error(`${label} timed out after ${Math.floor(REQUEST_TIMEOUT_MS / 1000)}s`));
+      }, REQUEST_TIMEOUT_MS);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    });
   }
 
   function normalizeProducts(rows) {
@@ -47,17 +47,18 @@
         ...row,
         name: row.name || "",
         image: row.image || "",
+        status: row.status || "",
         product_quantity: Number.isFinite(Number(row.product_quantity)) ? Number(row.product_quantity) : 0
       }));
   }
 
-  async function fetchProductsFallback(sb) {
+  async function queryProductsFallback(sb) {
     const fallback = await withTimeout(
       sb
         .from("products")
         .select("id, name, image, status, created_at, product_quantity, units_per_box, price_per_unit, price_per_box")
         .order("created_at", { ascending: false }),
-      "Products fallback query"
+      "Products query"
     );
 
     if (fallback.error) throw fallback.error;
@@ -70,35 +71,35 @@
 
     try {
       rpcResponse = await withTimeout(sb.rpc("get_storefront_products"), "get_storefront_products RPC");
-    } catch (rpcTransportError) {
-      return fetchProductsFallback(sb);
+    } catch (transportError) {
+      return queryProductsFallback(sb);
     }
 
     const { data, error } = rpcResponse;
 
     if (!error) {
-      const rows = normalizeProducts(data);
-      if (rows.length > 0) return rows;
-      return fetchProductsFallback(sb);
+      const normalized = normalizeProducts(data);
+      if (normalized.length > 0) return normalized;
+      return queryProductsFallback(sb);
     }
 
     if (!isMissingRpc(error, "get_storefront_products")) {
       throw error;
     }
 
-    return fetchProductsFallback(sb);
+    return queryProductsFallback(sb);
   };
 
   window.getStorefrontProduct = async function (client, productId) {
     const sb = client || window.createSupabaseClientOrFail();
-    let rpcResponse;
+    let rpcResponse = null;
 
     try {
       rpcResponse = await withTimeout(
         sb.rpc("get_storefront_product", { p_product_id: productId }),
         "get_storefront_product RPC"
       );
-    } catch (rpcTransportError) {
+    } catch (transportError) {
       rpcResponse = null;
     }
 
@@ -118,7 +119,7 @@
         .select("id, name, image, status, created_at, product_quantity, price_per_unit, price_per_box, units_per_box")
         .eq("id", productId)
         .maybeSingle(),
-      "Product fallback query"
+      "Product query"
     );
 
     if (fallback.error) throw fallback.error;
