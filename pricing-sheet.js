@@ -35,6 +35,11 @@
     return Math.round(toNumber(value, 0) * 100) / 100;
   }
 
+  function toInputMoney(value) {
+    const n = roundMoney(toNumber(value, 0));
+    return Number.isFinite(n) ? String(n) : "0";
+  }
+
   function escapeHtml(text) {
     return String(text || "")
       .replace(/&/g, "&amp;")
@@ -125,14 +130,14 @@
 
     if (error) {
       console.error(error);
-      sheetBody.innerHTML = '<tr><td colspan="6">Failed to load products.</td></tr>';
+      sheetBody.innerHTML = '<tr><td colspan="7">Failed to load products.</td></tr>';
       setStatus(error.message || "Failed to load products.", "error");
       return;
     }
 
     const rows = Array.isArray(data) ? data : [];
     if (!rows.length) {
-      sheetBody.innerHTML = '<tr><td colspan="6">No products found.</td></tr>';
+      sheetBody.innerHTML = '<tr><td colspan="7">No products found.</td></tr>';
       setStatus("No products found.");
       return;
     }
@@ -142,13 +147,16 @@
       const purchase = Math.max(0, toNumber(row.purchase_price, 0));
       const status = rowStatus(row);
       return `
-        <tr data-id="${escapeHtml(row.id)}">
+        <tr data-id="${escapeHtml(row.id)}" data-cost-source="pool">
           <td>${escapeHtml(row.name || "Unnamed")}</td>
           <td>
             <input type="number" min="0" step="1" value="${qty}" data-field="product_quantity" ${canEdit ? "" : "disabled"}>
           </td>
           <td>
-            <input type="number" min="0" step="1" value="${purchase}" data-field="purchase_price" ${canEdit ? "" : "disabled"}>
+            <input type="number" min="0" step="1" value="${toInputMoney(purchase)}" data-field="purchase_price" ${canEdit ? "" : "disabled"}>
+          </td>
+          <td>
+            <input type="number" min="0" step="0.01" value="${toInputMoney(avgCostPerUnit({ product_quantity: qty, purchase_price: purchase }))}" data-field="purchase_per_unit" ${canEdit ? "" : "disabled"}>
           </td>
           <td>${formatRwf(avgCostPerUnit({ product_quantity: qty, purchase_price: purchase }))}</td>
           <td data-role="status" data-units-per-box="${Math.max(1, Math.floor(toNumber(row.units_per_box, 1)))}">${escapeHtml(status)}</td>
@@ -227,8 +235,9 @@
 
     const quantityInput = rowEl.querySelector('input[data-field="product_quantity"]');
     const purchaseInput = rowEl.querySelector('input[data-field="purchase_price"]');
+    const purchasePerUnitInput = rowEl.querySelector('input[data-field="purchase_per_unit"]');
     const statusCell = rowEl.querySelector('[data-role="status"]');
-    if (!quantityInput || !purchaseInput) {
+    if (!quantityInput || !purchaseInput || !purchasePerUnitInput) {
       setStatus("Unable to save: missing row inputs.", "error");
       buttonEl.disabled = false;
       return;
@@ -237,7 +246,12 @@
 
     const product_quantity = Math.max(0, Math.floor(toNumber(quantityInput?.value, 0)));
     const stock = product_quantity;
-    const purchase_price = Math.max(0, toNumber(purchaseInput?.value, 0));
+    const enteredPool = Math.max(0, toNumber(purchaseInput?.value, 0));
+    const enteredPerUnit = Math.max(0, toNumber(purchasePerUnitInput?.value, 0));
+    const costSource = rowEl.dataset.costSource === "unit" ? "unit" : "pool";
+    const purchase_price = costSource === "unit"
+      ? roundMoney(enteredPerUnit * product_quantity)
+      : roundMoney(enteredPool);
     const status = product_quantity > 0 ? "available" : "out_of_stock";
 
     buttonEl.disabled = true;
@@ -259,8 +273,18 @@
       }
 
       if (statusCell) statusCell.textContent = status;
-      const avgCell = rowEl.children[3];
+      purchaseInput.value = toInputMoney(purchase_price);
+      purchasePerUnitInput.value = toInputMoney(avgCostPerUnit({ product_quantity, purchase_price }));
+      const avgCell = rowEl.children[4];
       if (avgCell) avgCell.textContent = formatRwf(avgCostPerUnit({ product_quantity, purchase_price }));
+
+      if (result.fallbackUsed) {
+        setStatus(
+          `✅ Product updated with fallback correction: ${result.salesUpdated} sales updated. ${result.warning || "Install supabase/correction_mode.sql to enable full transactional system recalculation."}`,
+          "warn"
+        );
+        return;
+      }
 
       setStatus(
         `✅ Product updated. System fully recalculated: ${result.salesUpdated} sales updated, ${result.reportsUpdated} report records updated, inventory and dashboard synced (${result.inventoryUpdated} inventory, ${result.dashboardUpdated} dashboard).`,
@@ -280,7 +304,9 @@
     }
 
     if (statusCell) statusCell.textContent = status;
-    const avgCell = rowEl.children[3];
+    purchaseInput.value = toInputMoney(purchase_price);
+    purchasePerUnitInput.value = toInputMoney(avgCostPerUnit({ product_quantity, purchase_price }));
+    const avgCell = rowEl.children[4];
     if (avgCell) avgCell.textContent = formatRwf(avgCostPerUnit({ product_quantity, purchase_price }));
 
     const profitSync = await syncSoldItemProfit(productId, purchase_price, product_quantity, unitsPerBox);
@@ -305,8 +331,29 @@
 
     if (error) {
       if (isMissingFunctionError(error, rpcName)) {
+        const productUpdate = await updateProductRow(productId, payload);
+        if (productUpdate.error) {
+          return { error: productUpdate.error.message || "Fallback correction failed during product update." };
+        }
+
+        const salesSync = await syncSoldItemProfit(
+          productId,
+          payload.purchase_price,
+          payload.product_quantity,
+          unitsPerBox
+        );
+
+        if (salesSync.error) {
+          return { error: salesSync.error };
+        }
+
         return {
-          error: "Correction Mode SQL is not installed. Run supabase/correction_mode.sql first, then retry."
+          salesUpdated: Math.max(0, toNumber(salesSync.updated, 0)),
+          reportsUpdated: 0,
+          inventoryUpdated: 0,
+          dashboardUpdated: 0,
+          fallbackUsed: true,
+          warning: "Correction Mode SQL is not installed, so transactional backup/report/dashboard sync was skipped."
         };
       }
       return { error: error.message || "Correction Mode failed." };
@@ -318,6 +365,7 @@
       reportsUpdated: Math.max(0, toNumber(result.reports_updated, 0)),
       inventoryUpdated: Math.max(0, toNumber(result.inventory_updated, 0)),
       dashboardUpdated: Math.max(0, toNumber(result.dashboard_updated, 0)),
+      fallbackUsed: false,
       error: ""
     };
   }
@@ -372,6 +420,36 @@
     const productId = target.dataset.id;
     const rowEl = target.closest("tr");
     saveRow(productId, rowEl, target);
+  });
+
+  sheetBody?.addEventListener("input", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const rowEl = target.closest("tr");
+    if (!rowEl) return;
+
+    const quantityInput = rowEl.querySelector('input[data-field="product_quantity"]');
+    const purchaseInput = rowEl.querySelector('input[data-field="purchase_price"]');
+    const purchasePerUnitInput = rowEl.querySelector('input[data-field="purchase_per_unit"]');
+    const avgCell = rowEl.children[4];
+    if (!quantityInput || !purchaseInput || !purchasePerUnitInput) return;
+
+    const qty = Math.max(0, Math.floor(toNumber(quantityInput.value, 0)));
+    const pool = Math.max(0, toNumber(purchaseInput.value, 0));
+    const perUnit = Math.max(0, toNumber(purchasePerUnitInput.value, 0));
+
+    if (target.dataset.field === "purchase_per_unit") {
+      rowEl.dataset.costSource = "unit";
+      const nextPool = roundMoney(perUnit * qty);
+      purchaseInput.value = toInputMoney(nextPool);
+      if (avgCell) avgCell.textContent = formatRwf(qty > 0 ? perUnit : 0);
+      return;
+    }
+
+    rowEl.dataset.costSource = "pool";
+    const nextPerUnit = avgCostPerUnit({ product_quantity: qty, purchase_price: pool });
+    purchasePerUnitInput.value = toInputMoney(nextPerUnit);
+    if (avgCell) avgCell.textContent = formatRwf(nextPerUnit);
   });
 
   correctionModeToggle?.addEventListener("change", () => {
