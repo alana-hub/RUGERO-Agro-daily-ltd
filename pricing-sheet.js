@@ -9,6 +9,7 @@
   let supabaseClient;
   let canEdit = false;
   let correctionModeEnabled = false;
+  let hasLegacyStockColumn = true;
 
   function setStatus(message, type = "") {
     if (!sheetStatus) return;
@@ -65,6 +66,11 @@
     return new RegExp(`Could not find the function|${fnName}`, "i").test(message);
   }
 
+  function isMissingColumnError(error, columnName) {
+    const message = String(error?.message || "");
+    return new RegExp(`column\\s+.*${columnName}.*does not exist`, "i").test(message);
+  }
+
   function updateSaveButtonLabels() {
     if (!sheetBody) return;
     const label = correctionModeEnabled ? "Save & Recalculate System" : "Save";
@@ -92,10 +98,28 @@
     setButtonsDisabled(true);
     setStatus("Loading pricing sheet...");
 
-    const { data, error } = await supabaseClient
+    let data;
+    let error;
+
+    const withStock = await supabaseClient
       .from("products")
       .select("id, name, product_quantity, stock, purchase_price, units_per_box, status")
       .order("name", { ascending: true });
+
+    if (!withStock.error) {
+      hasLegacyStockColumn = true;
+      data = withStock.data;
+    } else if (isMissingColumnError(withStock.error, "stock")) {
+      hasLegacyStockColumn = false;
+      const withoutStock = await supabaseClient
+        .from("products")
+        .select("id, name, product_quantity, purchase_price, units_per_box, status")
+        .order("name", { ascending: true });
+      data = withoutStock.data;
+      error = withoutStock.error;
+    } else {
+      error = withStock.error;
+    }
 
     setButtonsDisabled(false);
 
@@ -182,9 +206,19 @@
   }
 
   async function updateProductRow(productId, payload) {
-    return supabaseClient
+    const attempt = await supabaseClient
       .from("products")
       .update(payload)
+      .eq("id", productId);
+
+    if (!attempt.error) return attempt;
+    if (!isMissingColumnError(attempt.error, "stock")) return attempt;
+
+    hasLegacyStockColumn = false;
+    const { stock, ...withoutStockPayload } = payload;
+    return supabaseClient
+      .from("products")
+      .update(withoutStockPayload)
       .eq("id", productId);
   }
 
@@ -210,7 +244,9 @@
     buttonEl.textContent = correctionModeEnabled ? "Recalculating..." : "Saving...";
     setStatus(correctionModeEnabled ? "Running correction mode..." : "Saving product update...");
 
-    const payload = { product_quantity, purchase_price, status, stock };
+    const payload = hasLegacyStockColumn
+      ? { product_quantity, purchase_price, status, stock }
+      : { product_quantity, purchase_price, status };
 
     if (correctionModeEnabled) {
       const result = await runCorrectionMode(productId, payload, unitsPerBox);
