@@ -25,11 +25,29 @@
     return new RegExp(`Could not find the function|${functionName}`, "i").test(String(error?.message || error || ""));
   }
 
+  function sanitizeStorefrontProduct(row) {
+    const item = row || {};
+    return {
+      id: item.id || "",
+      name: item.name || "",
+      image: item.image || "",
+      status: item.status || "out_of_stock",
+      created_at: item.created_at || null,
+      product_quantity: Number.isFinite(Number(item.product_quantity)) ? Number(item.product_quantity) : 0,
+      units_per_box: Number.isFinite(Number(item.units_per_box)) ? Number(item.units_per_box) : null,
+      is_in_stock: typeof item.is_in_stock === "boolean" ? item.is_in_stock : undefined
+    };
+  }
+
+  function sanitizeStorefrontProducts(rows) {
+    return (Array.isArray(rows) ? rows : []).map(sanitizeStorefrontProduct);
+  }
+
   window.listStorefrontProducts = async function (client) {
     const sb = client || window.createSupabaseClientOrFail();
     const { data, error } = await sb.rpc("get_storefront_products");
     if (!error) {
-      return Array.isArray(data) ? data : [];
+      return sanitizeStorefrontProducts(data);
     }
 
     if (!isMissingRpc(error, "get_storefront_products")) {
@@ -38,12 +56,12 @@
 
     const fallback = await sb
       .from("products")
-      .select("id, name, image, status, created_at, product_quantity, units_per_box, price_per_unit, price_per_box")
+      .select("id, name, image, status, created_at, product_quantity, units_per_box")
       .in("status", ["available", "out_of_stock"])
       .order("created_at", { ascending: false });
 
     if (fallback.error) throw fallback.error;
-    return Array.isArray(fallback.data) ? fallback.data : [];
+    return sanitizeStorefrontProducts(fallback.data);
   };
 
   window.getStorefrontProduct = async function (client, productId) {
@@ -51,7 +69,7 @@
     const { data, error } = await sb.rpc("get_storefront_product", { p_product_id: productId });
     if (!error) {
       const rows = Array.isArray(data) ? data : [];
-      return rows[0] || null;
+      return rows[0] ? sanitizeStorefrontProduct(rows[0]) : null;
     }
 
     if (!isMissingRpc(error, "get_storefront_product")) {
@@ -60,11 +78,11 @@
 
     const fallback = await sb
       .from("products")
-      .select("id, name, image, status, created_at, product_quantity, price_per_unit, price_per_box, units_per_box")
+      .select("id, name, image, status, created_at, product_quantity, units_per_box")
       .eq("id", productId)
       .maybeSingle();
 
     if (fallback.error) throw fallback.error;
-    return fallback.data || null;
+    return fallback.data ? sanitizeStorefrontProduct(fallback.data) : null;
   };
 })();
