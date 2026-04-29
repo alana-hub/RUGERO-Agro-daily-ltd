@@ -138,240 +138,346 @@
             <p class="subtitle">Negotiate and Pay via WhatsApp</p>
         </div>
 
-        <div class="toolbar">
-            <input id="searchInput" class="form-control" type="search" placeholder="Search products...">
-            <select id="sortSelect" class="form-select">
-                <option value="newest">Sort: Newest</option>
-                <option value="name_asc">Name: A-Z</option>
-            </select>
-        </div>
-
-        <p class="status-line" id="statusLine">Loading products...</p>
-        <div class="shop-container" id="shopContainer"></div>
-
-        <footer>
-            <p>&copy; 2026 RUGERO Agro-Daily Ltd Online Shop</p>
-            <a href="login.html">Staff Login</a>
-        </footer>
+            <div class="toolbar">
+        <input id="searchInput" class="form-control" type="search" placeholder="Search products...">
+        <select id="sortSelect" class="form-select">
+            <option value="newest">Sort: Newest</option>
+            <option value="name_asc">Name: A-Z</option>
+        </select>
     </div>
 
-    <div class="floating-actions">
-        <a id="floatingWhatsApp" class="floating-wa" href="#">WhatsApp</a>
-        <a id="floatingCall" class="floating-call" href="#">
-            <span class="floating-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.91.35 1.8.68 2.66a2 2 0 0 1-.45 2.11L8.07 9.93a16 16 0 0 0 6 6l1.44-1.27a2 2 0 0 1 2.11-.45c.86.33 1.75.56 2.66.68A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-            </span>
-            <span class="floating-copy">
-                <strong>Call Shop</strong>
-                <small>Quick support</small>
-            </span>
-        </a>
-    </div>
+    <p class="status-line" id="statusLine">Loading products...</p>
+    <div class="shop-container" id="shopContainer"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./env.js"></script>
-    <script src="./supabase-client.js?v=20260409v2"></script>
-    <script>
-        const shopContainer = document.getElementById("shopContainer");
-        const statusLine = document.getElementById("statusLine");
-        const searchInput = document.getElementById("searchInput");
-        const sortSelect = document.getElementById("sortSelect");
-        const brandName = document.getElementById("brandName");
-        const brandLogo = document.getElementById("brandLogo");
-        const floatingWhatsApp = document.getElementById("floatingWhatsApp");
-        const floatingCall = document.getElementById("floatingCall");
-        const canonicalLink = document.getElementById("canonicalLink");
-        const ogUrl = document.getElementById("ogUrl");
-        const faviconLink = document.querySelector('link[rel="icon"]');
-        const phoneIconMarkup = `
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <footer>
+        <p>&copy; 2026 RUGERO Agro-Daily Ltd Online Shop</p>
+        <a href="login.html">Staff Login</a>
+    </footer>
+</div>
+
+<div class="floating-actions">
+    <a id="floatingWhatsApp" class="floating-wa" href="#">WhatsApp</a>
+    <a id="floatingCall" class="floating-call" href="#">
+        <span class="floating-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.91.35 1.8.68 2.66a2 2 0 0 1-.45 2.11L8.07 9.93a16 16 0 0 0 6 6l1.44-1.27a2 2 0 0 1 2.11-.45c.86.33 1.75.56 2.66.68A2 2 0 0 1 22 16.92z"></path>
             </svg>
+        </span>
+        <span class="floating-copy">
+            <strong>Call Shop</strong>
+            <small>Quick support</small>
+        </span>
+    </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./env.js"></script>
+<script src="./supabase-client.js?v=20260409v2"></script>
+<script>
+    const shopContainer = document.getElementById("shopContainer");
+    const statusLine = document.getElementById("statusLine");
+    const searchInput = document.getElementById("searchInput");
+    const sortSelect = document.getElementById("sortSelect");
+    const brandName = document.getElementById("brandName");
+    const floatingWhatsApp = document.getElementById("floatingWhatsApp");
+    const floatingCall = document.getElementById("floatingCall");
+    const canonicalLink = document.getElementById("canonicalLink");
+    const ogUrl = document.getElementById("ogUrl");
+    const faviconLink = document.querySelector('link[rel="icon"]');
+    const phoneIconMarkup = `
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.91.35 1.8.68 2.66a2 2 0 0 1-.45 2.11L8.07 9.93a16 16 0 0 0 6 6l1.44-1.27a2 2 0 0 1 2.11-.45c.86.33 1.75.56 2.66.68A2 2 0 0 1 22 16.92z"></path>
+        </svg>
+    `;
+
+    let supabaseClient;
+    let allProducts = [];
+    let productsLoadPromise = null;
+
+    function storefrontLog(...args) {
+        console.log("[storefront:ui]", ...args);
+    }
+
+    function fallbackImageSrc(label) {
+        const safeLabel = String(label || "Image")
+            .slice(0, 40)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+                <rect width="640" height="640" fill="#e7edf2"/>
+                <rect x="96" y="96" width="448" height="448" rx="42" fill="#ffffff" stroke="#c9d6e2" stroke-width="10"/>
+                <text x="320" y="332" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" fill="#5d6d7e">${safeLabel}</text>
+            </svg>
         `;
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
 
-        let supabaseClient;
-        let allProducts = [];
-        let productsPollId = null;
-        let productHandlersBound = false;
-        let productsLoadPromise = null;
-        const storefrontDebugEnabled = true;
+    function attachImageFallback(imgEl, label) {
+        if (!imgEl || imgEl.dataset.fallbackBound === "true") return;
+        const fallbackSrc = fallbackImageSrc(label);
+        imgEl.dataset.fallbackBound = "true";
+        imgEl.addEventListener("error", () => {
+            if (imgEl.dataset.fallbackApplied === "true") return;
+            imgEl.dataset.fallbackApplied = "true";
+            imgEl.src = fallbackSrc;
+        });
+        if (!imgEl.getAttribute("src")) {
+            imgEl.dataset.fallbackApplied = "true";
+            imgEl.src = fallbackSrc;
+        }
+    }
 
-        function storefrontLog(...args) {
-            if (!storefrontDebugEnabled) return;
-            console.log("[storefront:ui]", ...args);
+    function ensureFavicon() {
+        if (!faviconLink) return;
+        const iconHref = faviconLink.getAttribute("href") || "";
+        if (!iconHref) {
+            faviconLink.href = fallbackImageSrc("Shop");
+            return;
+        }
+        const probe = new Image();
+        probe.onerror = () => {
+            faviconLink.href = fallbackImageSrc("Shop");
+        };
+        probe.src = iconHref;
+    }
+
+    function escapeHtml(text) {
+        return String(text || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function getWhatsAppLink(message) {
+        const phone = (window.appConfig?.whatsappPhone || "").replace(/\D/g, "");
+        return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "#";
+    }
+
+    function getCallLink() {
+        const phone = (window.appConfig?.adminPhone || "").replace(/\s+/g, "");
+        return phone ? `tel:${phone}` : "#";
+    }
+
+    async function loadProductsDirectFromTable() {
+        const attempts = [
+            "id, name, image, created_at, product_quantity, stock, status",
+            "id, name, image, created_at, product_quantity, status",
+            "id, name, image, created_at, stock, status",
+            "id, name, image, created_at, status",
+            "id, name, image, created_at",
+            "*"
+        ];
+
+        let lastError = null;
+        for (const selectClause of attempts) {
+            const result = await supabaseClient
+                .from("products")
+                .select(selectClause)
+                .order("created_at", { ascending: false });
+
+            if (!result.error) {
+                const rows = Array.isArray(result.data) ? result.data : [];
+                return rows.map((row) => ({
+                    ...row,
+                    id: row?.id || row?.product_id || "",
+                    name: row?.name || row?.product_name || "",
+                    image: row?.image || row?.image_url || "",
+                    product_quantity: Number(row?.product_quantity ?? row?.stock ?? 0) || 0
+                })).filter(Boolean);
+            }
+
+            lastError = result.error;
+            const msg = String(result.error?.message || "");
+            if (!/column .* does not exist/i.test(msg)) {
+                throw result.error;
+            }
         }
 
-        function fallbackImageSrc(label) {
-            const safeLabel = String(label || "Image")
-                .slice(0, 40)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#39;");
-            const svg = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-                    <rect width="640" height="640" fill="#e7edf2"/>
-                    <rect x="96" y="96" width="448" height="448" rx="42" fill="#ffffff" stroke="#c9d6e2" stroke-width="10"/>
-                    <text x="320" y="332" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" fill="#5d6d7e">${safeLabel}</text>
-                </svg>
+        throw lastError || new Error("Unable to query products table.");
+    }
+
+    async function loadProductsFromSource() {
+        if (typeof window.listStorefrontProducts === "function") {
+            try {
+                const products = await window.listStorefrontProducts(supabaseClient);
+                if (Array.isArray(products)) return products;
+            } catch (error) {
+                storefrontLog("listStorefrontProducts failed, using table fallback", error);
+            }
+        }
+        return loadProductsDirectFromTable();
+    }
+
+    function applyFilters() {
+        const search = searchInput.value.trim().toLowerCase();
+        const sort = sortSelect.value;
+        let rows = [...allProducts];
+
+        if (search) {
+            rows = rows.filter((item) => String(item.name || "").toLowerCase().includes(search));
+        }
+
+        rows.sort((a, b) => {
+            if (sort === "name_asc") return String(a.name || "").localeCompare(String(b.name || ""));
+            return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        });
+
+        renderProducts(rows);
+    }
+
+    async function copyProductLink(productId, triggerEl) {
+        if (!productId) return;
+        const basePath = window.location.pathname.replace(/[^/]*$/, "");
+        const productUrl = `${window.location.origin}${basePath}product.html?id=${encodeURIComponent(productId)}`;
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(productUrl);
+            } else {
+                const input = document.createElement("input");
+                input.value = productUrl;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand("copy");
+                document.body.removeChild(input);
+            }
+
+            if (triggerEl) {
+                const original = triggerEl.textContent;
+                triggerEl.textContent = "Copied";
+                window.setTimeout(() => {
+                    triggerEl.textContent = original;
+                }, 1200);
+            }
+        } catch (error) {
+            storefrontLog("copyProductLink failed", error);
+        }
+    }
+
+    function renderProducts(products) {
+        if (!products.length) {
+            shopContainer.innerHTML = '<div class="placeholder">No available products right now.</div>';
+            statusLine.textContent = "No available products.";
+            return;
+        }
+
+        statusLine.textContent = `${products.length} product(s) available.`;
+        shopContainer.innerHTML = products.map((item) => {
+            const safeName = escapeHtml(item.name || "Unnamed product");
+            const safeImage = escapeHtml(item.image || "");
+            const imageSrc = safeImage || fallbackImageSrc("Product image");
+            const hasStockFlag = Object.prototype.hasOwnProperty.call(item || {}, "is_in_stock");
+            const outOfStock = hasStockFlag
+                ? !Boolean(item.is_in_stock)
+                : (Number(item.product_quantity) || 0) <= 0;
+            const message = `Hello! I am interested in ${safeName} from ${window.appConfig?.businessName || "our shop"}.`;
+            const callHref = getCallLink();
+            const callDisabled = callHref === "#";
+            const productId = escapeHtml(item.id || "");
+
+            return `
+                <article class="product-card">
+                    <img src="${imageSrc}" alt="${safeName}" class="product-image" loading="lazy">
+                    <h3 class="product-name">${safeName}</h3>
+                    <div class="row-actions">
+                        <button class="btn-shop btn-whatsapp" ${outOfStock ? "disabled" : ""} onclick="window.open('${getWhatsAppLink(message)}', '_blank')">WhatsApp</button>
+                        <a class="btn-shop btn-call${callDisabled ? " is-disabled" : ""}" href="${callHref}" ${callDisabled ? 'aria-disabled="true" tabindex="-1"' : ""}>
+                            <span class="btn-icon">${phoneIconMarkup}</span>
+                            <span class="btn-copy">
+                                <span class="btn-label">Call Now</span>
+                                <span class="btn-meta">${callDisabled ? "Number unavailable" : "Talk to the shop"}</span>
+                            </span>
+                        </a>
+                        <a class="btn-shop btn-link" href="${item.id ? `product.html?id=${encodeURIComponent(item.id)}` : '#'}" ${item.id ? "" : 'aria-disabled="true" tabindex="-1"'}>View Details</a>
+                        <button class="btn-shop btn-copy-link" ${item.id ? "" : "disabled"} onclick="copyProductLink('${productId}', this)">Copy File</button>
+                    </div>
+                </article>
             `;
-            return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-        }
+        }).join("");
 
-        function attachImageFallback(imgEl, label) {
-            if (!imgEl || imgEl.dataset.fallbackBound === "true") return;
-            const fallbackSrc = fallbackImageSrc(label);
-            imgEl.dataset.fallbackBound = "true";
-            imgEl.addEventListener("error", () => {
-                if (imgEl.dataset.fallbackApplied === "true") return;
-                imgEl.dataset.fallbackApplied = "true";
-                imgEl.src = fallbackSrc;
-            });
-            if (!imgEl.getAttribute("src")) {
-                imgEl.dataset.fallbackApplied = "true";
-                imgEl.src = fallbackSrc;
+        shopContainer.querySelectorAll(".product-image").forEach((img) => attachImageFallback(img, "Product image"));
+    }
+
+    async function loadProducts(options = {}) {
+        if (productsLoadPromise) return productsLoadPromise;
+
+        const showLoading = options.showLoading !== false;
+        productsLoadPromise = (async () => {
+            if (showLoading) statusLine.textContent = "Loading products...";
+
+            try {
+                const products = await loadProductsFromSource();
+                allProducts = Array.isArray(products) ? products : [];
+                applyFilters();
+                return allProducts;
+            } catch (error) {
+                storefrontLog("loadProducts failed", error);
+                statusLine.textContent = "Unable to load products right now.";
+                shopContainer.innerHTML = '<div class="placeholder">Unable to load products. Please try again later.</div>';
+                allProducts = [];
+                return [];
+            } finally {
+                productsLoadPromise = null;
             }
+        })();
+
+        return productsLoadPromise;
+    }
+
+    function setFloatingButtons() {
+        const waHref = getWhatsAppLink(`Hello! I need help from ${window.appConfig?.businessName || "the shop"}.`);
+        floatingWhatsApp.href = waHref;
+        floatingWhatsApp.target = waHref === "#" ? "_self" : "_blank";
+
+        const callHref = getCallLink();
+        const callDisabled = callHref === "#";
+        floatingCall.href = callHref;
+        floatingCall.classList.toggle("is-disabled", callDisabled);
+        floatingCall.setAttribute("aria-disabled", callDisabled ? "true" : "false");
+        if (callDisabled) {
+            floatingCall.setAttribute("tabindex", "-1");
+        } else {
+            floatingCall.removeAttribute("tabindex");
+        }
+    }
+
+    function setBranding() {
+        const businessNameText = window.appConfig?.businessName || "RUGERO Agro-Daily Ltd";
+        brandName.textContent = businessNameText;
+        document.title = `${businessNameText}`;
+
+        const canonicalUrl = window.location.href;
+        if (canonicalLink) canonicalLink.setAttribute("href", canonicalUrl);
+        if (ogUrl) ogUrl.setAttribute("content", canonicalUrl);
+    }
+
+    function bindProductHandlers() {
+        searchInput.addEventListener("input", applyFilters);
+        sortSelect.addEventListener("change", applyFilters);
+    }
+
+    async function init() {
+        ensureFavicon();
+        setBranding();
+        setFloatingButtons();
+        bindProductHandlers();
+
+        try {
+            supabaseClient = createSupabaseClientOrFail();
+        } catch (error) {
+            statusLine.textContent = error.message || "Missing storefront configuration.";
+            shopContainer.innerHTML = '<div class="placeholder">Storefront configuration is missing.</div>';
+            return;
         }
 
-        function ensureFavicon() {
-            if (!faviconLink) return;
-            const iconHref = faviconLink.getAttribute("href") || "";
-            if (!iconHref) {
-                faviconLink.href = fallbackImageSrc("Shop");
-                return;
-            }
+        await loadProducts({ showLoading: true });
+    }
 
-            const probe = new Image();
-            probe.onerror = () => {
-                faviconLink.href = fallbackImageSrc("Shop");
-            };
-            probe.src = iconHref;
-        }
-
-        function escapeHtml(text) {
-            return String(text || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/\"/g, "&quot;")
-                .replace(/'/g, "&#39;");
-        }
-
-        function getWhatsAppLink(message) {
-            const phone = (window.appConfig?.whatsappPhone || "").replace(/\D/g, "");
-            return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "#";
-        }
-
-        function getCallLink() {
-            const phone = (window.appConfig?.adminPhone || "").replace(/\s+/g, "");
-            return phone ? `tel:${phone}` : "#";
-        }
-
-
-        async function loadProductsDirectFromTable() {
-            const attempts = [
-                "id, name, image, created_at, product_quantity, stock, status",
-                "id, name, image, created_at, product_quantity, status",
-                "id, name, image, created_at, stock, status",
-                "id, name, image, created_at, status",
-                "id, name, image, created_at"
-            ];
-
-            let lastError = null;
-            for (const selectClause of attempts) {
-                const result = await supabaseClient
-                    .from("products")
-                    .select(selectClause)
-                    .order("created_at", { ascending: false });
-
-                if (!result.error) {
-                    const rows = Array.isArray(result.data) ? result.data : [];
-                    return rows.map((row) => ({
-                        ...row,
-                        id: row?.id || row?.product_id || "",
-                        name: row?.name || row?.product_name || "",
-                        image: row?.image || row?.image_url || "",
-                        product_quantity: Number(row?.product_quantity ?? row?.stock ?? 0) || 0
-                    })).filter(Boolean);
-                }
-
-                lastError = result.error;
-                const msg = String(result.error?.message || "");
-                if (!/column .* does not exist/i.test(msg)) {
-                    throw result.error;
-                }
-            }
-
-            throw lastError || new Error("Unable to query products table.");
-        }
-
-        function applyFilters() {
-            const search = searchInput.value.trim().toLowerCase();
-            const sort = sortSelect.value;
-            let rows = [...allProducts];
-
-            if (search) {
-                rows = rows.filter((item) => String(item.name || "").toLowerCase().includes(search));
-            }
-
-            rows.sort((a, b) => {
-                if (sort === "name_asc") return String(a.name || "").localeCompare(String(b.name || ""));
-                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-            });
-
-            renderProducts(rows);
-        }
-
-        function renderProducts(products) {
-            if (!products.length) {
-                shopContainer.innerHTML = '<div class="placeholder">No available products right now.</div>';
-                statusLine.textContent = "No available products.";
-                return;
-            }
-
-            statusLine.textContent = `${products.length} product(s) available.`;
-            storefrontLog("renderProducts", { count: products.length, sample: products[0] || null });
-            shopContainer.innerHTML = products.map((item) => {
-                const safeName = escapeHtml(item.name || "Unnamed product");
-                const safeImage = escapeHtml(item.image || "");
-                const imageSrc = safeImage || fallbackImageSrc("Product image");
-                const hasStockFlag = Object.prototype.hasOwnProperty.call(item || {}, "is_in_stock");
-                const outOfStock = hasStockFlag
-                    ? !Boolean(item.is_in_stock)
-                    : (Number(item.product_quantity) || 0) <= 0;
-                const message = `Hello! I am interested in ${safeName} from ${window.appConfig.businessName}.`;
-                const callHref = getCallLink();
-                const callDisabled = callHref === "#";
-
-                return `
-                    <article class="product-card">
-                        <img src="${imageSrc}" alt="${safeName}" class="product-image" loading="lazy">
-                        <h3 class="product-name">${safeName}</h3>
-                        <div class="row-actions">
-                            <button class="btn-shop btn-whatsapp" ${outOfStock ? "disabled" : ""} onclick="window.open('${getWhatsAppLink(message)}', '_blank')">WhatsApp</button>
-                            <a class="btn-shop btn-call${callDisabled ? " is-disabled" : ""}" href="${callHref}" ${callDisabled ? 'aria-disabled="true" tabindex="-1"' : ""}>
-                                <span class="btn-icon">${phoneIconMarkup}</span>
-                                <span class="btn-copy">
-                                    <span class="btn-label">Call Now</span>
-                                    <span class="btn-meta">${callDisabled ? "Number unavailable" : "Talk to the shop"}</span>
-                                </span>
-                            </a>
-                            <a class="btn-shop btn-link" href="${item.id ? `product.html?id=${encodeURIComponent(item.id)}` : '#'}" ${item.id ? "" : 'aria-disabled="true" tabindex="-1"'}>View Details</a>
-                        </div>
-                    </article>
-                `;
-            }).join("");
-
-            shopContainer.querySelectorAll(".product-image").forEach((img) => attachImageFallback(img, "Product image"));
-        }
-
-        async function loadProducts(options = {}) {
-            if (productsLoadPromise) return productsLoadPromise;
-
-            const showLoading = options.showLoading !== false;
-            productsLoadPromise = (async () => {
-                if (showLoading) {
-    
+    init();
+</script>
