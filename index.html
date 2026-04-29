@@ -395,8 +395,7 @@
                             </span>
                         </a>
                         <a class="btn-shop btn-link" href="${item.id ? `product.html?id=${encodeURIComponent(item.id)}` : '#'}" ${item.id ? "" : 'aria-disabled="true" tabindex="-1"'}>View Details</a>
-                        <button class="btn-shop btn-copy-link" ${item.id ? "" : "disabled"} onclick="copyProductLink('${productId}', this)">Copy File</button>
-                    </div>
+                       
                 </article>
             `;
         }).join("");
