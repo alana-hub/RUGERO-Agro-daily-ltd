@@ -129,26 +129,10 @@
             .floating-call { animation: none; }
         }
         
-.header-btn {
-    background-color: #ff6600;
-    color: white;
-    padding: 10px 18px;
-    text-decoration: none; /* removes underline */
-    border-radius: 6px;
-    font-weight: 500;
-    transition: 0.3s ease;
-    display: inline-block;
-}
-
-.header-btn:hover {
-    background-color: #e65c00;
-    transform: scale(1.05);
-}
-
     </style>
 </head>
 <body>
-    <a href="login.html" class="header-btn">Login</a>
+
     <div class="wrap">
         <div class="brand-header">
             <img id="brandLogo" src="logo.png" alt="RUGERO Agro-Daily Ltd Logo" class="logo-img">
@@ -157,6 +141,7 @@
         </div>
 
             <div class="toolbar">
+                 <a href="login.html" class="header-btn">Login</a>
         <input id="searchInput" class="form-control" type="search" placeholder="Search products...">
         <select id="sortSelect" class="form-select">
             <option value="newest">Sort: Newest</option>
